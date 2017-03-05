@@ -1,0 +1,20 @@
+{
+    "name": "yunwuxin/think-pay",
+    "description": "Omnipay for thinkphp5",
+    "type": "think-extend",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "yunwuxin",
+            "email": "448901948@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5",
+        "topthink/think-installer": "^1.0",
+        "guzzlehttp/guzzle": "~6.0"
+    },
+    "require-dev": {
+        "topthink/framework": "^5.0"
+    }
+}
