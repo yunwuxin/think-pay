@@ -11,7 +11,20 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
-class App
+use function http_build_query;
+use yunwuxin\pay\gateway\Alipay;
+use yunwuxin\pay\interfaces\Payable;
+
+class App extends Alipay
 {
 
+    /**
+     * 购买
+     * @param Payable $charge
+     * @return mixed
+     */
+    public function pay(Payable $charge)
+    {
+        return http_build_query($this->buildParams($charge));
+    }
 }

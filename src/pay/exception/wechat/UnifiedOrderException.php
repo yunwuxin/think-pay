@@ -9,19 +9,15 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-return [
-    'channels' => [
-        'alipay' => [
-            'app_id'  => '',
-            'email'   => '',
-            'partner' => '',
-            'key'     => ''
-        ],
-        'wechat' => [
-            'app_id' => '',
-            'mch_id' => '',
-            'key'    => ''
-        ],
-        'paypal' => []
-    ]
-];
+namespace yunwuxin\pay\exception\wechat;
+
+use Exception;
+use Throwable;
+
+class UnifiedOrderException extends Exception
+{
+    public function __construct($message = "", $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}

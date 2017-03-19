@@ -10,42 +10,29 @@
 // +----------------------------------------------------------------------
 namespace yunwuxin\pay;
 
-use RuntimeException;
-use think\Response;
+use InvalidArgumentException;
 
 abstract class Channel
 {
-    protected $gateway;
 
-    /**
-     * 创建网关
-     * @param $name
-     * @return Gateway
-     */
+    protected static $gateways = [];
+
     protected function buildGateway($name)
     {
-
+        if (isset(static::$gateways[$name])) {
+            return new static::$gateways[$name]($this);
+        }
+        throw new InvalidArgumentException("Gateway [{$name}] not supported.");
     }
 
     /**
      * 设置支付网关
      * @param $name
-     * @return $this
+     * @return Gateway
      */
-    public function setGateway($name)
+    public function useGateway($name)
     {
-        $this->gateway = $this->buildGateway($name);
-        return $this;
-    }
-
-    /**
-     * 购买
-     * @param Order $goods
-     * @return Response
-     */
-    public function purchase(Order $goods)
-    {
-
+        return $this->buildGateway($name);
     }
 
     /**
@@ -64,12 +51,4 @@ abstract class Channel
 
     }
 
-    public function __call($name, $arguments)
-    {
-        if ($this->gateway && method_exists($this, $name)) {
-            call_user_func_array([$this, $name], $arguments);
-            return $this;
-        }
-        throw new RuntimeException("method {$name} not found");
-    }
 }

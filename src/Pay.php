@@ -12,10 +12,14 @@ namespace yunwuxin;
 
 use InvalidArgumentException;
 use think\Config;
+use think\helper\Str;
 use yunwuxin\pay\Channel;
 
 class Pay
 {
+    const ALIPAY = 'alipay';
+    const WECHAT = 'wechat';
+
     /** @var Channel[] */
     protected static $channels = [];
 
@@ -40,8 +44,8 @@ class Pay
      */
     protected static function buildChannel($name)
     {
-        $className = "\\yunwuxin\\pay\\channel\\" . ucfirst($name);
-        $channels  = Config::get('social.channels');
+        $className = "\\yunwuxin\\pay\\channel\\" . Str::studly($name);
+        $channels  = Config::get('pay.channels');
         if (class_exists($className) && isset($channels[$name])) {
             return new $className($channels[$name]);
         }

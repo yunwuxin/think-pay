@@ -8,35 +8,39 @@
 // +----------------------------------------------------------------------
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
+
 namespace yunwuxin\pay\channel;
 
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\exception\ConfigException;
-use yunwuxin\pay\gateway\alipay\App;
-use yunwuxin\pay\gateway\alipay\QrCode;
+use yunwuxin\pay\gateway\wechat\App;
+use yunwuxin\pay\gateway\wechat\Pub;
+use yunwuxin\pay\gateway\wechat\PubQrCode;
 
-class Alipay extends Channel
+class Wechat extends Channel
 {
-    const APP = 'app';
-    const QR  = 'qr';
+    const APP    = 'app';
+    const PUB    = 'pub';
+    const PUB_QR = 'pub_qr_code';
 
     protected static $gateways = [
-        self::APP => App::class,
-        self::QR  => QrCode::class
+        self::APP    => App::class,
+        self::PUB    => Pub::class,
+        self::PUB_QR => PubQrCode::class
     ];
 
     protected $appId;
-    protected $publicKey;
-    protected $privateKey;
+    protected $mchId;
+    protected $key;
 
     public function __construct($config)
     {
-        if (empty($config['app_id']) || empty($config['public_key']) || empty($config['private_key'])) {
+        if (empty($config['app_id']) || empty($config['mch_id']) || empty($config['key'])) {
             throw new ConfigException;
         }
-        $this->appId      = $config['app_id'];
-        $this->publicKey  = $config['public_key'];
-        $this->privateKey = $config['private_key'];
+        $this->appId = $config['app_id'];
+        $this->mchId = $config['mch_id'];
+        $this->key   = $config['key'];
     }
 
     /**
@@ -50,21 +54,16 @@ class Alipay extends Channel
     /**
      * @return mixed
      */
-    public function getPrivateKey()
+    public function getMchId()
     {
-        return $this->privateKey;
+        return $this->mchId;
     }
 
     /**
      * @return mixed
      */
-    public function getPublicKey()
+    public function getKey()
     {
-        return $this->publicKey;
-    }
-
-    public function getSellerId()
-    {
-
+        return $this->key;
     }
 }

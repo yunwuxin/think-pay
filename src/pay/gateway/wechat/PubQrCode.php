@@ -9,11 +9,22 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay;
+namespace yunwuxin\pay\gateway\wechat;
 
-class Order
+use yunwuxin\pay\gateway\Wechat;
+use yunwuxin\pay\interfaces\Payable;
+
+class PubQrCode extends Wechat
 {
-    protected $data = [];
 
-    
+    /**
+     * 购买
+     * @param Payable $charge
+     * @return mixed
+     */
+    public function pay(Payable $charge)
+    {
+        $result = $this->unifiedOrder($charge, self::TYPE_NATIVE);
+        return $result['code_url'];
+    }
 }

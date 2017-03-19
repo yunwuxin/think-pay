@@ -9,19 +9,11 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-return [
-    'channels' => [
-        'alipay' => [
-            'app_id'  => '',
-            'email'   => '',
-            'partner' => '',
-            'key'     => ''
-        ],
-        'wechat' => [
-            'app_id' => '',
-            'mch_id' => '',
-            'key'    => ''
-        ],
-        'paypal' => []
-    ]
-];
+namespace yunwuxin\pay\exception;
+
+use RuntimeException;
+
+class ConfigException extends RuntimeException
+{
+
+}

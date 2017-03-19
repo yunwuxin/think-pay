@@ -9,25 +9,31 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay;
+namespace yunwuxin\pay\gateway\wechat;
 
+use think\helper\Str;
+use yunwuxin\pay\gateway\Wechat;
 use yunwuxin\pay\interfaces\Payable;
 
-abstract class Gateway
+class Pub extends Wechat
 {
-
-    /** @var Channel */
-    protected $channel;
-
-    public function __construct(Channel $channel)
-    {
-        $this->channel = $channel;
-    }
 
     /**
      * 购买
      * @param Payable $charge
      * @return mixed
      */
-    abstract public function pay(Payable $charge);
+    public function pay(Payable $charge)
+    {
+        $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
+        $data             = [
+            'appId'     => $this->channel->getAppId(),
+            'package'   => 'prepay_id=' . $result['prepay_id'],
+            'nonceStr'  => Str::random(),
+            'timeStamp' => time(),
+        ];
+        $data['signType'] = 'MD5';
+        $data['paySign']  = $this->generateSign($data);
+        return $data;
+    }
 }
