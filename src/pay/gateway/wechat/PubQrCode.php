@@ -11,10 +11,11 @@
 
 namespace yunwuxin\pay\gateway\wechat;
 
-use yunwuxin\pay\gateway\Wechat;
+use yunwuxin\pay\channel\Wechat;
+use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
-class PubQrCode extends Wechat
+class PubQrCode extends Gateway
 {
 
     /**
@@ -22,9 +23,9 @@ class PubQrCode extends Wechat
      * @param Payable $charge
      * @return mixed
      */
-    public function pay(Payable $charge)
+    public function purchase(Payable $charge)
     {
-        $result = $this->unifiedOrder($charge, self::TYPE_NATIVE);
+        $result = $this->channel->unifiedOrder($charge, Wechat::TYPE_NATIVE);
         return $result['code_url'];
     }
 }

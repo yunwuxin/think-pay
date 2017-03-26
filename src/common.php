@@ -9,6 +9,9 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
+use think\Hook;
+use think\Route;
+
 function array2xml($arr, $root = 'xml')
 {
     $xml = "<$root>";
@@ -27,3 +30,11 @@ function xml2array($xml)
 {
     return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
 }
+
+Hook::add('app_init', function () {
+    //注册路由
+    Route::any([
+        "PAY_NOTIFY",
+        "pay/:channel/notify"
+    ], '\\yunwuxin\\pay\\NotifyController@index');
+});

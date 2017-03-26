@@ -11,15 +11,15 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
-use yunwuxin\pay\gateway\Alipay;
+use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
 /**
- * 手机网站支付网关(新版)
+ * 手机网站支付网关
  * Class Wap
  * @package yunwuxin\pay\channel\alipay\gateway
  */
-class Wap extends Alipay
+class Wap extends Gateway
 {
 
     /**
@@ -27,8 +27,9 @@ class Wap extends Alipay
      * @param Payable $charge
      * @return mixed
      */
-    public function pay(Payable $charge)
+    public function purchase(Payable $charge)
     {
-        // TODO: Implement pay() method.
+        $response = $this->channel->wapPay($charge);
+        return response($response->getBody()->getContents())->header('Content-Type', $response->getHeaderLine('Content-Type'));
     }
 }

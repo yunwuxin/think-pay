@@ -13,9 +13,20 @@ namespace yunwuxin\pay\traits;
 use Exception;
 use Jenssegers\Date\Date;
 use yunwuxin\Pay;
+use yunwuxin\pay\interfaces\Refundable;
 
-trait PayableCharge
+trait PayableModel
 {
+    protected function getExtraAttr($extra)
+    {
+        return json_decode($extra, true);
+    }
+
+    protected function setExtraAttr($extra)
+    {
+        return json_encode($extra);
+    }
+
     private function getAttrOrNull($name)
     {
         try {
@@ -25,17 +36,17 @@ trait PayableCharge
         }
     }
 
-    public static function retrieveByOrderNo($orderNo)
+    public static function retrieveByTradeNo($tradeNo)
     {
-        return self::get(preg_replace('/^NO/', '', $orderNo));
+        return self::get(preg_replace('/^TradeNo\./', '', $tradeNo));
     }
 
-    public function getOrderNo()
+    public function getTradeNo()
     {
         $orderNo = $this->getAttrOrNull('id');
 
         if ($orderNo) {
-            return 'NO' . $orderNo;
+            return 'TradeNo.' . $orderNo;
         }
     }
 
@@ -63,16 +74,21 @@ trait PayableCharge
         }
     }
 
-    public function pay($channel, $gateway)
-    {
-        return Pay::channel($channel)->useGateway($gateway)->pay($this);
-    }
-
     public function getExpire(callable $format)
     {
         $date = $this->getAttrOrNull('expire_time');
         if ($date) {
             return $format(Date::parse($date));
         }
+    }
+
+    public function pay($gateway)
+    {
+        return Pay::gateway($gateway)->purchase($this);
+    }
+
+    public function refund(Refundable $refund)
+    {
+
     }
 }

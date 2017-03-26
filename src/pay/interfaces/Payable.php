@@ -12,7 +12,7 @@ namespace yunwuxin\pay\interfaces;
 
 interface Payable
 {
-    public function getOrderNo();
+    public function getTradeNo();
 
     public function getAmount();
 
@@ -24,5 +24,10 @@ interface Payable
 
     public function getExpire(callable $format);
 
-    public static function retrieveByOrderNo($orderNo);
+    public function isComplete();
+
+    public function onComplete($channel, $outTradeNo, $amount, $isPaid, $raw = []);
+
+    public static function retrieveByTradeNo($orderNo);
+
 }

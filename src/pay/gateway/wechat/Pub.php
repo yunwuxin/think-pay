@@ -11,11 +11,10 @@
 
 namespace yunwuxin\pay\gateway\wechat;
 
-use think\helper\Str;
-use yunwuxin\pay\gateway\Wechat;
+use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
-class Pub extends Wechat
+class Pub extends Gateway
 {
 
     /**
@@ -23,17 +22,8 @@ class Pub extends Wechat
      * @param Payable $charge
      * @return mixed
      */
-    public function pay(Payable $charge)
+    public function purchase(Payable $charge)
     {
-        $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
-        $data             = [
-            'appId'     => $this->channel->getAppId(),
-            'package'   => 'prepay_id=' . $result['prepay_id'],
-            'nonceStr'  => Str::random(),
-            'timeStamp' => time(),
-        ];
-        $data['signType'] = 'MD5';
-        $data['paySign']  = $this->generateSign($data);
-        return $data;
+        return $this->channel->buildPubParams($charge);
     }
 }

@@ -11,10 +11,10 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
-use yunwuxin\pay\gateway\Alipay;
+use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
-class QrCode extends Alipay
+class QrCode extends Gateway
 {
 
     /**
@@ -22,9 +22,9 @@ class QrCode extends Alipay
      * @param Payable $charge
      * @return mixed
      */
-    public function pay(Payable $charge)
+    public function purchase(Payable $charge)
     {
-        $result = $this->preCreate($charge);
+        $result = $this->channel->preCreate($charge);
         return $result['qr_code'];
     }
 }

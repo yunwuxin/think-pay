@@ -14,17 +14,15 @@ use InvalidArgumentException;
 use think\Config;
 use think\helper\Str;
 use yunwuxin\pay\Channel;
+use yunwuxin\pay\Gateway;
 
 class Pay
 {
-    const ALIPAY = 'alipay';
-    const WECHAT = 'wechat';
-
     /** @var Channel[] */
     protected static $channels = [];
 
     /**
-     * 获取一个社会化渠道
+     * 获取一个支付渠道
      * @param string $name
      * @return Channel
      */
@@ -38,6 +36,17 @@ class Pay
     }
 
     /**
+     * 获取一个付款网关
+     * @param $name
+     * @return Gateway
+     */
+    public static function gateway($name)
+    {
+        list($channel, $gateway) = explode('.', $name);
+        return self::channel($channel)->gateway($gateway);
+    }
+
+    /**
      * 创建渠道
      * @param string $name
      * @return Channel
@@ -47,7 +56,13 @@ class Pay
         $className = "\\yunwuxin\\pay\\channel\\" . Str::studly($name);
         $channels  = Config::get('pay.channels');
         if (class_exists($className) && isset($channels[$name])) {
-            return new $className($channels[$name]);
+            /** @var Channel $channel */
+            $channel = new $className($channels[$name]);
+            $channel->setNotifyUrl(url('PAY_NOTIFY', ['channel' => $name], '', true));
+            if (Config::get('pay.test')) {
+                $channel->setTest();
+            }
+            return $channel;
         }
         throw new InvalidArgumentException("Channel [{$name}] not supported.");
     }

@@ -10,18 +10,18 @@
 // +----------------------------------------------------------------------
 
 return [
+    'test'     => true,
+    'charge'   => 'app\\model\\Charge',
     'channels' => [
         'alipay' => [
-            'app_id'  => '',
-            'email'   => '',
-            'partner' => '',
-            'key'     => ''
+            'app_id'      => '',
+            'public_key'  => '',
+            'private_key' => ''
         ],
         'wechat' => [
+            'key'    => '',
             'app_id' => '',
-            'mch_id' => '',
-            'key'    => ''
-        ],
-        'paypal' => []
+            'mch_id' => ''
+        ]
     ]
 ];

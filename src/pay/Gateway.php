@@ -11,12 +11,14 @@
 
 namespace yunwuxin\pay;
 
+use yunwuxin\pay\channel\Alipay;
+use yunwuxin\pay\channel\Wechat;
 use yunwuxin\pay\interfaces\Payable;
 
 abstract class Gateway
 {
 
-    /** @var Channel */
+    /** @var Alipay|Wechat */
     protected $channel;
 
     public function __construct(Channel $channel)
@@ -25,9 +27,9 @@ abstract class Gateway
     }
 
     /**
-     * 购买
+     * 付款
      * @param Payable $charge
-     * @return mixed
      */
-    abstract public function pay(Payable $charge);
+    abstract public function purchase(Payable $charge);
+
 }

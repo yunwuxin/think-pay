@@ -8,11 +8,12 @@
 // +----------------------------------------------------------------------
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
-namespace yunwuxin\pay\exception\alipay;
 
-use Exception;
+namespace yunwuxin\pay\interfaces;
 
-class PreCreateException extends Exception
+interface Refundable
 {
+    public function getRefundNo();
 
+    public function getAmount();
 }
