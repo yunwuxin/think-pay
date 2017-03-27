@@ -10,6 +10,8 @@
 // +----------------------------------------------------------------------
 namespace yunwuxin\pay\interfaces;
 
+use yunwuxin\pay\entity\PurchaseResult;
+
 interface Payable
 {
     public function getTradeNo();
@@ -24,10 +26,17 @@ interface Payable
 
     public function getExpire(callable $format);
 
+    /**
+     * @return bool
+     */
     public function isComplete();
 
-    public function onComplete($channel, $outTradeNo, $amount, $isPaid, $raw = []);
+    public function onComplete(PurchaseResult $result);
 
+    /**
+     * @param $orderNo
+     * @return self
+     */
     public static function retrieveByTradeNo($orderNo);
 
 }

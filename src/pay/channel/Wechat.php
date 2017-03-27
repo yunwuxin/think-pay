@@ -18,6 +18,7 @@ use think\Cache;
 use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\Channel;
+use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\exception\ConfigException;
 use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
@@ -81,7 +82,7 @@ class Wechat extends Channel
         $this->validateSign($data);
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete('wechat', $data['transaction_id'], $data['total_fee'], $data['result_code'] == 'SUCCESS', $data);
+            $charge->onComplete(PurchaseResult::makeByWechat($data));
         }
         $return = [
             'return_code' => 'SUCCESS',

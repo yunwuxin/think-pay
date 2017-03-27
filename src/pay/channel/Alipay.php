@@ -15,6 +15,7 @@ use GuzzleHttp\Psr7\Response;
 use Jenssegers\Date\Date;
 use think\Request;
 use yunwuxin\pay\Channel;
+use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\exception\ConfigException;
 use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
@@ -77,7 +78,7 @@ class Alipay extends Channel
 
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status']);
+            $charge->onComplete(PurchaseResult::makeByAlipay($data));
         }
         return response('success');
     }
