@@ -71,7 +71,7 @@ class Wechat extends Channel
 
         $response = Client::post($this->endpoint('orderquery'), Options::makeWithBody(array2xml($params)));
         $result   = $this->validateResponse($response);
-        $this->validateSign($result);
+
         return $result;
     }
 
@@ -131,7 +131,7 @@ class Wechat extends Channel
         return $data;
     }
 
-    public function buildPubParams(Payable $charge)
+    public function buildWapParams(Payable $charge)
     {
         $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
         $data             = [
@@ -187,8 +187,6 @@ class Wechat extends Channel
 
         $result = $this->validateResponse($response);
 
-        $this->validateSign($result);
-
         return $result;
     }
 
@@ -211,6 +209,10 @@ class Wechat extends Channel
 
         if ($result['return_code'] != 'SUCCESS') {
             throw new DomainException($result['return_msg']);
+        }
+
+        if (isset($result['sign'])) {
+            $this->validateSign($result);
         }
         return $result;
     }

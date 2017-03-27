@@ -14,7 +14,7 @@ namespace yunwuxin\pay\gateway\wechat;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
-class Pub extends Gateway
+class Wap extends Gateway
 {
 
     /**
@@ -24,6 +24,6 @@ class Pub extends Gateway
      */
     public function purchase(Payable $charge)
     {
-        return $this->channel->buildPubParams($charge);
+        return $this->channel->buildWapParams($charge);
     }
 }

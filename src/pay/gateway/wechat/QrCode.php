@@ -15,7 +15,7 @@ use yunwuxin\pay\channel\Wechat;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
-class PubQrCode extends Gateway
+class QrCode extends Gateway
 {
 
     /**
