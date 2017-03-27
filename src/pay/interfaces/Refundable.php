@@ -11,9 +11,7 @@
 
 namespace yunwuxin\pay\interfaces;
 
-interface Refundable
+interface Refundable extends Payable
 {
-    public function getRefundNo();
-
-    public function getAmount();
+    public function getChannel();
 }

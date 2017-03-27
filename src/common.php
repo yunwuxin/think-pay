@@ -36,5 +36,5 @@ Hook::add('app_init', function () {
     Route::any([
         "PAY_NOTIFY",
         "pay/:channel/notify"
-    ], '\\yunwuxin\\pay\\NotifyController@index');
+    ], '\\yunwuxin\\pay\\NotifyController@index', ['complete_match' => true]);
 });
