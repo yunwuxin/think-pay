@@ -12,6 +12,7 @@
 namespace yunwuxin\pay\gateway\wechat;
 
 use yunwuxin\pay\channel\Wechat;
+use yunwuxin\pay\entity\QrCodeResult;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
@@ -26,6 +27,6 @@ class QrCode extends Gateway
     public function purchase(Payable $charge)
     {
         $result = $this->channel->unifiedOrder($charge, Wechat::TYPE_NATIVE);
-        return $result['code_url'];
+        return new QrCodeResult($result['code_url']);
     }
 }

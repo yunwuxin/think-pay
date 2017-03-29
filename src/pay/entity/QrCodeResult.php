@@ -1,31 +1,32 @@
 <?php
 // +----------------------------------------------------------------------
-// | ThinkPay
+// | ThinkPHP [ WE CAN DO IT JUST THINK IT ]
 // +----------------------------------------------------------------------
-// | Copyright (c) yunwuxin All rights reserved.
+// | Copyright (c) 2006-2017 http://thinkphp.cn All rights reserved.
 // +----------------------------------------------------------------------
 // | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
 // +----------------------------------------------------------------------
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay\gateway\wechat;
+namespace yunwuxin\pay\entity;
 
-use yunwuxin\pay\entity\ParamResult;
-use yunwuxin\pay\Gateway;
-use yunwuxin\pay\interfaces\Payable;
-
-class App extends Gateway
+class QrCodeResult
 {
+    protected $codeUrl;
 
-    /**
-     * 购买
-     * @param Payable $charge
-     * @return mixed
-     */
-    public function purchase(Payable $charge)
+    public function __construct($codeUrl)
     {
-        $param = $this->channel->buildAppParams($charge);
-        return new ParamResult($param);
+        $this->codeUrl = $codeUrl;
+    }
+
+    public function getCodeUrl()
+    {
+        return $this->codeUrl;
+    }
+
+    public function __toString()
+    {
+        return $this->codeUrl;
     }
 }

@@ -11,6 +11,7 @@
 
 namespace yunwuxin\pay\gateway\wechat;
 
+use yunwuxin\pay\entity\ParamResult;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
@@ -24,6 +25,7 @@ class Wap extends Gateway
      */
     public function purchase(Payable $charge)
     {
-        return $this->channel->buildWapParams($charge);
+        $param = $this->channel->buildWapParams($charge);
+        return new ParamResult($param);
     }
 }

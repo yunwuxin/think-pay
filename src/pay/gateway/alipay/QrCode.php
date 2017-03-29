@@ -11,6 +11,7 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
+use yunwuxin\pay\entity\QrCodeResult;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
@@ -25,6 +26,6 @@ class QrCode extends Gateway
     public function purchase(Payable $charge)
     {
         $result = $this->channel->preCreate($charge);
-        return $result['qr_code'];
+        return new QrCodeResult($result['qr_code']);
     }
 }

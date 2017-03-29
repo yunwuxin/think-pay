@@ -11,6 +11,7 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
+use yunwuxin\pay\entity\ResponseResult;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 
@@ -30,6 +31,7 @@ class Wap extends Gateway
     public function purchase(Payable $charge)
     {
         $response = $this->channel->wapPay($charge);
-        return response($response->getBody()->getContents())->header('Content-Type', $response->getHeaderLine('Content-Type'));
+        $response = response($response->getBody()->getContents())->header('Content-Type', $response->getHeaderLine('Content-Type'));
+        return new ResponseResult($response);
     }
 }
