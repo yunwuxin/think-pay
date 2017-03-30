@@ -9,6 +9,7 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
+use think\Config;
 use think\Hook;
 use think\Route;
 
@@ -33,8 +34,10 @@ function xml2array($xml)
 
 Hook::add('app_init', function () {
     //注册路由
-    Route::any([
-        "PAY_NOTIFY",
-        "pay/:channel/notify"
-    ], '\\yunwuxin\\pay\\NotifyController@index', ['complete_match' => true]);
+    if (Config::get('pay.route')) {
+        Route::any([
+            "PAY_NOTIFY",
+            "pay/:channel/notify"
+        ], '\\yunwuxin\\pay\\NotifyController@index', ['complete_match' => true]);
+    }
 });

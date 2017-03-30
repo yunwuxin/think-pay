@@ -10,9 +10,9 @@
 // +----------------------------------------------------------------------
 
 return [
-    'test'     => true,
-    'charge'   => 'app\\model\\Charge',
-    'channels' => [
+    'test'       => true,//沙箱模式
+    'charge'     => 'app\\model\\Charge',
+    'channels'   => [
         'alipay' => [
             'app_id'      => '',
             'public_key'  => '',
@@ -23,5 +23,7 @@ return [
             'app_id' => '',
             'mch_id' => ''
         ]
-    ]
+    ],
+    'notify_url' => '',//留空则设为PAY_NOTIFY对应的路由
+    'route'      => true,//是否注册路由
 ];

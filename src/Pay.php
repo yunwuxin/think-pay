@@ -58,7 +58,14 @@ class Pay
         if (class_exists($className) && isset($channels[$name])) {
             /** @var Channel $channel */
             $channel = new $className($channels[$name]);
-            $channel->setNotifyUrl(url('PAY_NOTIFY', ['channel' => $name], '', true));
+
+            $notifyUrl = Config::get('pay.notify_url');
+            if ($notifyUrl) {
+                $channel->setNotifyUrl(str_replace(':channel', $name, $notifyUrl));
+            } else {
+                $channel->setNotifyUrl(url('PAY_NOTIFY', ['channel' => $name], '', true));
+            }
+
             if (Config::get('pay.test')) {
                 $channel->setTest();
             }
