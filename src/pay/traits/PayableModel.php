@@ -38,7 +38,7 @@ trait PayableModel
 
     public static function retrieveByTradeNo($tradeNo)
     {
-        return self::get(preg_replace('/^TradeNo\./', '', $tradeNo));
+        return self::get(preg_replace('/^TradeNo/', '', $tradeNo));
     }
 
     public function getTradeNo()
@@ -46,7 +46,7 @@ trait PayableModel
         $orderNo = $this->getAttrOrNull('id');
 
         if ($orderNo) {
-            return 'TradeNo.' . $orderNo;
+            return 'TradeNo' . $orderNo;
         }
     }
 
