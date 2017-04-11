@@ -83,6 +83,30 @@ class Alipay extends Channel
         return response('success');
     }
 
+    public function buildAppParams(Payable $charge)
+    {
+        $bizContent = array_filter([
+            'body'                 => $charge->getBody(),
+            'subject'              => $charge->getSubject(),
+            'out_trade_no'         => $charge->getTradeNo(),
+            'timeout_express'      => $charge->getExpire(function (Date $date) {
+                //todo
+            }),
+            'total_amount'         => $charge->getAmount() / 100,
+            'seller_id'            => $charge->getExtra('seller_id'),
+            'product_code'         => 'QUICK_MSECURITY_PAY',
+            'goods_type'           => $charge->getExtra('goods_type'),
+            'passback_params'      => $charge->getExtra('passback_params'),
+            'promo_params'         => $charge->getExtra('promo_params'),
+            'extend_params'        => $charge->getExtra('extend_params'),
+            'enable_pay_channels'  => $charge->getExtra('enable_pay_channels'),
+            'disable_pay_channels' => $charge->getExtra('disable_pay_channels'),
+            'store_id'             => $charge->getExtra('store_id')
+        ]);
+
+        return $this->buildParams('alipay.trade.app.pay', $bizContent, ['notify_url' => $this->notifyUrl]);
+    }
+
     public function buildPreCreateParams(Payable $charge)
     {
         $bizContent = array_filter([

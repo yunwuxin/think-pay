@@ -25,7 +25,7 @@ class App extends Gateway
      */
     public function purchase(Payable $charge)
     {
-        $param = http_build_query($this->channel->buildPreCreateParams($charge));
+        $param = http_build_query($this->channel->buildAppParams($charge));
         return new ParamResult($param);
     }
 }
