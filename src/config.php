@@ -19,9 +19,11 @@ return [
             'private_key' => ''
         ],
         'wechat' => [
-            'key'    => '',
-            'app_id' => '',
-            'mch_id' => ''
+            'key'       => '',
+            'app_id'    => '',
+            'mch_id'    => '',
+            'cert_path' => '',
+            'key_path'  => ''
         ]
     ],
     'notify_url' => '',//留空则设为PAY_NOTIFY对应的路由

@@ -15,6 +15,7 @@ use think\Config;
 use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\interfaces\Payable;
+use yunwuxin\pay\interfaces\Refundable;
 
 abstract class Channel
 {
@@ -61,16 +62,16 @@ abstract class Channel
 
     /**
      * 退款
+     * @param Refundable $refund
      */
-    public function refund()
-    {
-        //todo
-    }
+    abstract public function refund(Refundable $refund);
 
-    public function refundQuery()
-    {
-        //todo
-    }
+    /**
+     * 退款查询
+     * @param Refundable $refund
+     * @return mixed
+     */
+    abstract public function refundQuery(Refundable $refund);
 
     /**
      * 转账
@@ -82,11 +83,10 @@ abstract class Channel
 
     /**
      * 查询
-     * @param      $tradeNo
-     * @param bool $isOut
+     * @param Payable $charge
      * @return mixed
      */
-    abstract public function query($tradeNo, $isOut = true);
+    abstract public function query(Payable $charge);
 
     abstract public function completePurchase(Request $request);
 

@@ -9,21 +9,38 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay\interfaces;
+namespace yunwuxin\pay\entity;
 
-interface Refundable
+class RefundResult
 {
-    public function getRefundNo();
 
-    public function getExtra($name);
+    protected $raw;
 
-    public function getAmount();
+    protected $channel;
 
-    public function getChannel();
+    public function __construct($channel)
+    {
+        $this->channel = $channel;
+    }
 
     /**
-     * @return Payable
+     * @return mixed
      */
-    public function getCharge();
-  
+    public function getChannel()
+    {
+        return $this->channel;
+    }
+
+    /**
+     * @param null $name
+     * @return mixed
+     */
+    public function getRaw($name = null)
+    {
+        if (is_null($name)) {
+            return $this->raw;
+        } elseif (isset($this->raw[$name])) {
+            return $this->raw[$name];
+        }
+    }
 }

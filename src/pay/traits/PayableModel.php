@@ -12,6 +12,7 @@ namespace yunwuxin\pay\traits;
 
 use Exception;
 use Jenssegers\Date\Date;
+use RuntimeException;
 use yunwuxin\Pay;
 use yunwuxin\pay\interfaces\Refundable;
 
@@ -62,7 +63,7 @@ trait PayableModel
 
     public function getBody()
     {
-        $this->getAttrOrNull('body');
+        return $this->getAttrOrNull('body');
     }
 
     public function getExtra($name)
@@ -82,13 +83,36 @@ trait PayableModel
         }
     }
 
+    /**
+     * 获取渠道标识
+     * @return string
+     */
+    public function getChannel()
+    {
+        $channel = $this->getAttrOrNull('channel');
+        if (empty($channel)) {
+            throw new RuntimeException('无法获取渠道标识!');
+        }
+        return $channel;
+    }
+
+    /**
+     * 订单查询
+     * @return mixed
+     */
+    public function query()
+    {
+        return Pay::channel($this->getChannel())->query($this);
+    }
+
+    /**
+     * 支付
+     * @param $gateway
+     * @return mixed
+     */
     public function pay($gateway)
     {
         return Pay::gateway($gateway)->purchase($this);
     }
 
-    public function refund(Refundable $refund)
-    {
-
-    }
 }

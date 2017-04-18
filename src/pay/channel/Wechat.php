@@ -24,6 +24,7 @@ use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
 use yunwuxin\pay\http\Options;
 use yunwuxin\pay\interfaces\Payable;
+use yunwuxin\pay\interfaces\Refundable;
 
 class Wechat extends Channel
 {
@@ -37,15 +38,19 @@ class Wechat extends Channel
     protected $appId;
     protected $mchId;
     protected $key;
+    protected $certPath;
+    protected $keyPath;
 
     public function __construct($config)
     {
         if (empty($config['app_id']) || empty($config['mch_id']) || empty($config['key'])) {
             throw new ConfigException;
         }
-        $this->appId = $config['app_id'];
-        $this->mchId = $config['mch_id'];
-        $this->key   = $config['key'];
+        $this->appId    = $config['app_id'];
+        $this->mchId    = $config['mch_id'];
+        $this->key      = $config['key'];
+        $this->certPath = $config['cert_path'];
+        $this->keyPath  = $config['key_path'];
     }
 
     public function setTest()
@@ -54,24 +59,78 @@ class Wechat extends Channel
         $this->key = $this->getSignKey();
     }
 
-    public function query($tradeNo, $isOut = true)
+    public function query(Payable $charge)
     {
         $params = [
-            'appid'     => $this->appId,
-            'mch_id'    => $this->mchId,
-            'nonce_str' => Str::random(),
-            'sign_type' => 'MD5'
+            'appid'        => $this->appId,
+            'mch_id'       => $this->mchId,
+            'nonce_str'    => Str::random(),
+            'sign_type'    => 'MD5',
+            'out_trade_no' => $charge->getTradeNo()
         ];
-        if ($isOut) {
-            $params['out_trade_no'] = $tradeNo;
-        } else {
-            $params['transaction_id'] = $tradeNo;
-        }
 
         $params['sign'] = $this->generateSign($params);
 
         $response = Client::post($this->endpoint('orderquery'), Options::makeWithBody(array2xml($params)));
         $result   = $this->validateResponse($response);
+
+        return $result;
+    }
+
+    /**
+     * 退款
+     * @param Refundable $refund
+     * @return array
+     */
+    public function refund(Refundable $refund)
+    {
+        $params = array_filter([
+            'appid'           => $this->appId,
+            'mch_id'          => $this->mchId,
+            'device_info'     => $refund->getExtra('device_info'),
+            'nonce_str'       => Str::random(),
+            'sign_type'       => 'MD5',
+            'out_trade_no'    => $refund->getCharge()->getTradeNo(),
+            'out_refund_no'   => $refund->getRefundNo(),
+            'total_fee'       => $refund->getCharge()->getAmount(),
+            'refund_fee'      => $refund->getAmount(),
+            'refund_fee_type' => $refund->getExtra('refund_fee_type'),
+            'refund_account'  => $refund->getExtra('refund_account'),
+            'op_user_id'      => $refund->getExtra('op_user_id') ?: $this->mchId
+        ]);
+
+        $params['sign'] = $this->generateSign($params);
+
+        $xml = array2xml($params);
+
+        $response = Client::post("https://api.mch.weixin.qq.com/secapi/pay/refund", Options::makeWithBody($xml)->setExtra([
+            'cert'    => $this->certPath,
+            'ssl_key' => $this->keyPath
+        ]));
+
+        $result = $this->validateResponse($response);
+
+        return $result;
+    }
+
+    public function refundQuery(Refundable $refund)
+    {
+        $params = [
+            'appid'         => $this->appId,
+            'mch_id'        => $this->mchId,
+            'device_info'   => $refund->getExtra('device_info'),
+            'nonce_str'     => Str::random(),
+            'sign_type'     => 'MD5',
+            'out_refund_no' => $refund->getRefundNo()
+        ];
+
+        $params['sign'] = $this->generateSign($params);
+
+        $xml = array2xml($params);
+
+        $response = Client::post($this->endpoint('refundquery'), Options::makeWithBody($xml));
+
+        $result = $this->validateResponse($response);
 
         return $result;
     }
@@ -82,7 +141,7 @@ class Wechat extends Channel
         $this->validateSign($data);
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete(PurchaseResult::makeByWechat($data));
+            $charge->onComplete(new PurchaseResult('wechat', $data['transaction_id'], $data['total_fee'], $data['result_code'] == 'SUCCESS', Date::parse($data['time_end']), $data));
         }
         $return = [
             'return_code' => 'SUCCESS',

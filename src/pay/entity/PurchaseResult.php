@@ -88,14 +88,4 @@ class PurchaseResult
     {
         return $this->channel;
     }
-
-    public static function makeByAlipay($data)
-    {
-        return new self('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], Date::parse($data['gmt_payment']), $data);
-    }
-
-    public static function makeByWechat($data)
-    {
-        return new self('wechat', $data['transaction_id'], $data['total_fee'], $data['result_code'] == 'SUCCESS', Date::parse($data['time_end']), $data);
-    }
 }

@@ -21,6 +21,7 @@ use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
 use yunwuxin\pay\http\Options;
 use yunwuxin\pay\interfaces\Payable;
+use yunwuxin\pay\interfaces\Refundable;
 
 class Alipay extends Channel
 {
@@ -45,18 +46,61 @@ class Alipay extends Channel
         }
     }
 
-    public function query($tradeNo, $isOut = true)
+    /**
+     * 订单查询
+     * @param Payable $charge
+     * @return array
+     */
+    public function query(Payable $charge)
     {
-        $bizContent = [];
-        if ($isOut) {
-            $bizContent['out_trade_no'] = $tradeNo;
-        } else {
-            $bizContent['trade_no'] = $tradeNo;
-        }
+        $bizContent = [
+            'trade_no' => $charge->getTradeNo()
+        ];
 
         $method   = 'alipay.trade.query';
         $params   = $this->buildParams($method, $bizContent);
         $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
+
+        $result = $this->validateResponse($response, $method);
+
+        return $result;
+    }
+
+    /**
+     * 退款
+     * @param Refundable $refund
+     * @return array
+     */
+    public function refund(Refundable $refund)
+    {
+        $bizContent = array_filter([
+            'out_trade_no'   => $refund->getCharge()->getTradeNo(),
+            'refund_amount'  => $refund->getAmount() / 100,
+            'refund_reason'  => $refund->getExtra('refund_reason'),
+            'out_request_no' => $refund->getRefundNo(),
+            'operator_id'    => $refund->getExtra('operator_id'),
+            'store_id'       => $refund->getExtra('store_id'),
+            'terminal_id'    => $refund->getExtra('terminal_id')
+        ]);
+
+        $method   = 'alipay.trade.refund';
+        $params   = $this->buildParams($method, $bizContent);
+        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
+
+        $result = $this->validateResponse($response, $method);
+
+        return $result;
+    }
+
+    public function refundQuery(Refundable $refund)
+    {
+        $bizContent = [
+            'out_trade_no'   => $refund->getCharge()->getTradeNo(),
+            'out_request_no' => $refund->getRefundNo()
+        ];
+        $method     = 'alipay.trade.fastpay.refund.query';
+        $params     = $this->buildParams($method, $bizContent);
+        $response   = Client::get($this->endpoint(), Options::makeWithQuery($params));
 
         $result = $this->validateResponse($response, $method);
 
@@ -78,7 +122,7 @@ class Alipay extends Channel
 
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete(PurchaseResult::makeByAlipay($data));
+            $charge->onComplete(new PurchaseResult('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], Date::parse($data['gmt_payment']), $data));
         }
         return response('success');
     }

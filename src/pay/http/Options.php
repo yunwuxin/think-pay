@@ -11,6 +11,8 @@
 
 namespace yunwuxin\pay\http;
 
+use function array_merge;
+
 class Options
 {
     protected $headers = [];
@@ -22,6 +24,8 @@ class Options
     protected $useJson = false;
 
     protected $body;
+
+    protected $extra = [];
 
     public static function makeWithQuery(array $query)
     {
@@ -83,6 +87,16 @@ class Options
         return is_null($name) ? $this->params : $this->params[$name];
     }
 
+    public function setExtra($name, $value = null)
+    {
+        if (is_array($name)) {
+            $this->extra = array_merge($this->extra, $name);
+        } else {
+            $this->extra[$name] = $value;
+        }
+        return $this;
+    }
+
     /**
      * @param mixed $body
      * @return $this
@@ -114,6 +128,6 @@ class Options
                 $arr['form_params'] = $this->params;
             }
         }
-        return $arr;
+        return array_merge($arr, $this->extra);
     }
 }
