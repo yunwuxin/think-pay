@@ -119,7 +119,7 @@ class Wechat extends Channel
 
     public function buildAppParams(Payable $charge)
     {
-        $result       = $this->unifiedOrder($charge, Wechat::TYPE_NATIVE);
+        $result       = $this->unifiedOrder($charge, Wechat::TYPE_APP);
         $data         = [
             'appid'     => $this->appId,
             'partnerid' => $this->mchId,
