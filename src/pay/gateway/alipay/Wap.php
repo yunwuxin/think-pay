@@ -30,8 +30,8 @@ class Wap extends Gateway
      */
     public function purchase(Payable $charge)
     {
-        $response = $this->channel->wapPay($charge);
-        $response = response($response->getBody()->getContents())->header('Content-Type', $response->getHeaderLine('Content-Type'));
+        $url      = $this->channel->wapPay($charge);
+        $response = redirect($url);
         return new ResponseResult($response);
     }
 }

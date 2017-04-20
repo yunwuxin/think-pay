@@ -205,7 +205,7 @@ class Alipay extends Channel
             'return_url' => $charge->getExtra('return_url')
         ]);
 
-        return Client::get($this->endpoint(), Options::makeWithQuery($params));
+        return sprintf('%s?%s', $this->endpoint(), http_build_query($params));
 
     }
 
