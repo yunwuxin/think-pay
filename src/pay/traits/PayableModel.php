@@ -14,7 +14,6 @@ use Exception;
 use Jenssegers\Date\Date;
 use RuntimeException;
 use yunwuxin\Pay;
-use yunwuxin\pay\interfaces\Refundable;
 
 trait PayableModel
 {

@@ -11,8 +11,6 @@
 
 namespace yunwuxin\pay\http;
 
-use function array_merge;
-
 class Options
 {
     protected $headers = [];
