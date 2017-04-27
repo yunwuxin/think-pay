@@ -19,12 +19,14 @@ use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\entity\PurchaseResult;
+use yunwuxin\pay\entity\TransferResult;
 use yunwuxin\pay\exception\ConfigException;
 use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
 use yunwuxin\pay\http\Options;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
+use yunwuxin\pay\interfaces\Transferable;
 
 class Wechat extends Channel
 {
@@ -57,6 +59,36 @@ class Wechat extends Channel
     {
         parent::setTest();
         $this->key = $this->getSignKey();
+    }
+
+    public function transfer(Transferable $transfer)
+    {
+        $params = array_filter([
+            'mch_appid'        => $transfer->getExtra('mch_appid'),
+            'mchid'            => $this->mchId,
+            'device_info'      => $transfer->getExtra('device_info'),
+            'nonce_str'        => Str::random(),
+            'partner_trade_no' => $transfer->getAccount(),
+            'openid'           => $transfer->getAccount(),
+            'check_name'       => $transfer->getRealName() ? 'FORCE_CHECK' : 'NO_CHECK',
+            're_user_name'     => $transfer->getRealName(),
+            'amount'           => $transfer->getAmount(),
+            'desc'             => $transfer->getRemark(),
+            'spbill_create_ip' => request()->ip()
+        ]);
+
+        $params['sign'] = $this->generateSign($params);
+
+        $xml = array2xml($params);
+
+        $response = Client::post("https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers", Options::makeWithBody($xml)->setExtra([
+            'cert'    => $this->certPath,
+            'ssl_key' => $this->keyPath
+        ]));
+
+        $result = $this->validateResponse($response);
+
+        return new TransferResult($result['payment_no'], $result['payment_time']);
     }
 
     public function query(Payable $charge)

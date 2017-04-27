@@ -16,12 +16,14 @@ use Jenssegers\Date\Date;
 use think\Request;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\entity\PurchaseResult;
+use yunwuxin\pay\entity\TransferResult;
 use yunwuxin\pay\exception\ConfigException;
 use yunwuxin\pay\exception\SignException;
 use yunwuxin\pay\http\Client;
 use yunwuxin\pay\http\Options;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
+use yunwuxin\pay\interfaces\Transferable;
 
 class Alipay extends Channel
 {
@@ -105,6 +107,29 @@ class Alipay extends Channel
         $result = $this->validateResponse($response, $method);
 
         return $result;
+    }
+
+    public function transfer(Transferable $transfer)
+    {
+        $bizContent = array_filter([
+            'out_biz_no'      => $transfer->getTransferNo(),
+            'payee_type'      => $transfer->getExtra('payee_type'),
+            'payee_account'   => $transfer->getAccount(),
+            'amount'          => $transfer->getAmount() / 100,
+            'payer_show_name' => $transfer->getExtra('payer_show_name'),
+            'payee_real_name' => $transfer->getRealName(),
+            'remark'          => $transfer->getRemark()
+        ]);
+
+        $method = 'alipay.fund.trans.toaccount.transfer';
+
+        $params = $this->buildParams($method, $bizContent);
+
+        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
+
+        $result = $this->validateResponse($response, $method);
+
+        return new TransferResult($result['order_id'], $result['pay_date']);
     }
 
     public function completePurchase(Request $request)

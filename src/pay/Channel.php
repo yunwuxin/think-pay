@@ -16,6 +16,7 @@ use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
+use yunwuxin\pay\interfaces\Transferable;
 
 abstract class Channel
 {
@@ -75,11 +76,10 @@ abstract class Channel
 
     /**
      * 转账
+     * @param Transferable $transfer
+     * @return
      */
-    public function transfer()
-    {
-        //todo
-    }
+    abstract public function transfer(Transferable $transfer);
 
     /**
      * 查询
