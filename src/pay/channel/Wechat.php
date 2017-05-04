@@ -61,6 +61,68 @@ class Wechat extends Channel
         $this->key = $this->getSignKey();
     }
 
+    protected function getSignKey()
+    {
+        return Cache::remember('wechat_sandbox_key', function () {
+            $params         = [
+                'mch_id'    => $this->mchId,
+                'nonce_str' => Str::random()
+            ];
+            $params['sign'] = $this->generateSign($params);
+
+            $response = Client::post($this->endpoint('getsignkey'), Options::makeWithBody(array2xml($params)));
+
+            $result = $this->validateResponse($response);
+
+            return $result['sandbox_signkey'];
+        });
+    }
+
+    protected function generateSign($params)
+    {
+        unset($params['sign']);
+        ksort($params);
+        $query = urldecode(http_build_query($params));
+        $query .= "&key={$this->key}";
+        return strtoupper(md5($query));
+    }
+
+    protected function endpoint($uri = '')
+    {
+        if ($this->test) {
+            return $this->testEndpoint . '/' . $uri;
+        } else {
+            return $this->liveEndpoint . '/' . $uri;
+        }
+    }
+
+    /**
+     * @param $response Response
+     * @return mixed
+     */
+    protected function validateResponse($response)
+    {
+        $result = xml2array($response->getBody()->getContents());
+
+        if ($result['return_code'] != 'SUCCESS') {
+            throw new DomainException($result['return_msg']);
+        }
+
+        if (isset($result['sign'])) {
+            $this->validateSign($result);
+        }
+        return $result;
+    }
+
+    protected function validateSign($params)
+    {
+        $sign = $this->generateSign($params);
+
+        if ($sign != $params['sign']) {
+            throw new SignException;
+        }
+    }
+
     public function transfer(Transferable $transfer)
     {
         $params = array_filter([
@@ -182,32 +244,6 @@ class Wechat extends Channel
         return response(array2xml($return));
     }
 
-    protected function generateSign($params)
-    {
-        unset($params['sign']);
-        ksort($params);
-        $query = urldecode(http_build_query($params));
-        $query .= "&key={$this->key}";
-        return strtoupper(md5($query));
-    }
-
-    protected function getSignKey()
-    {
-        return Cache::remember('wechat_sandbox_key', function () {
-            $params         = [
-                'mch_id'    => $this->mchId,
-                'nonce_str' => Str::random()
-            ];
-            $params['sign'] = $this->generateSign($params);
-
-            $response = Client::post($this->endpoint('getsignkey'), Options::makeWithBody(array2xml($params)));
-
-            $result = $this->validateResponse($response);
-
-            return $result['sandbox_signkey'];
-        });
-    }
-
     public function buildAppParams(Payable $charge)
     {
         $result       = $this->unifiedOrder($charge, Wechat::TYPE_APP);
@@ -220,20 +256,6 @@ class Wechat extends Channel
             'timestamp' => time(),
         ];
         $data['sign'] = $this->generateSign($data);
-        return $data;
-    }
-
-    public function buildWapParams(Payable $charge)
-    {
-        $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
-        $data             = [
-            'appId'     => $this->appId,
-            'package'   => 'prepay_id=' . $result['prepay_id'],
-            'nonceStr'  => Str::random(),
-            'timeStamp' => time(),
-        ];
-        $data['signType'] = 'MD5';
-        $data['paySign']  = $this->generateSign($data);
         return $data;
     }
 
@@ -279,43 +301,25 @@ class Wechat extends Channel
 
         $result = $this->validateResponse($response);
 
+        if ($result['result_code'] != 'SUCCESS') {
+            throw new DomainException($result['err_code_des']);
+        }
+
         return $result;
     }
 
-    protected function validateSign($params)
+    public function buildWapParams(Payable $charge)
     {
-        $sign = $this->generateSign($params);
-
-        if ($sign != $params['sign']) {
-            throw new SignException;
-        }
-    }
-
-    /**
-     * @param $response Response
-     * @return mixed
-     */
-    protected function validateResponse($response)
-    {
-        $result = xml2array($response->getBody()->getContents());
-
-        if ($result['return_code'] != 'SUCCESS') {
-            throw new DomainException($result['return_msg']);
-        }
-
-        if (isset($result['sign'])) {
-            $this->validateSign($result);
-        }
-        return $result;
-    }
-
-    protected function endpoint($uri = '')
-    {
-        if ($this->test) {
-            return $this->testEndpoint . '/' . $uri;
-        } else {
-            return $this->liveEndpoint . '/' . $uri;
-        }
+        $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
+        $data             = [
+            'appId'     => $this->appId,
+            'package'   => 'prepay_id=' . $result['prepay_id'],
+            'nonceStr'  => Str::random(),
+            'timeStamp' => time(),
+        ];
+        $data['signType'] = 'MD5';
+        $data['paySign']  = $this->generateSign($data);
+        return $data;
     }
 
 }
