@@ -53,7 +53,7 @@ class Pay
      */
     protected static function buildChannel($channelName)
     {
-        list($name, $group) = explode('@', $channelName);
+        list($name, $group) = explode('@', $channelName . '@');
 
         $className = "\\yunwuxin\\pay\\channel\\" . Str::studly($name);
         $channels  = Config::get('pay.channels');
