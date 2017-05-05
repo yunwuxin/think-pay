@@ -22,6 +22,17 @@ class Pay
     protected static $channels = [];
 
     /**
+     * 获取一个付款网关
+     * @param $name
+     * @return Gateway
+     */
+    public static function gateway($name)
+    {
+        list($channel, $gateway) = explode('.', $name);
+        return self::channel($channel)->gateway($gateway);
+    }
+
+    /**
      * 获取一个支付渠道
      * @param string $name
      * @return Channel
@@ -36,34 +47,32 @@ class Pay
     }
 
     /**
-     * 获取一个付款网关
-     * @param $name
-     * @return Gateway
-     */
-    public static function gateway($name)
-    {
-        list($channel, $gateway) = explode('.', $name);
-        return self::channel($channel)->gateway($gateway);
-    }
-
-    /**
      * 创建渠道
-     * @param string $name
+     * @param string $channelName
      * @return Channel
      */
-    protected static function buildChannel($name)
+    protected static function buildChannel($channelName)
     {
+        list($name, $group) = explode('@', $channelName);
+
         $className = "\\yunwuxin\\pay\\channel\\" . Str::studly($name);
         $channels  = Config::get('pay.channels');
         if (class_exists($className) && isset($channels[$name])) {
+
+            if (!empty($group) && isset($channels[$name][$group])) {
+                $config = $channels[$name][$group];
+            } else {
+                $config = $channels[$name];
+            }
+
             /** @var Channel $channel */
-            $channel = new $className($channels[$name]);
+            $channel = new $className($config);
 
             $notifyUrl = Config::get('pay.notify_url');
             if ($notifyUrl) {
-                $channel->setNotifyUrl(str_replace(':channel', $name, $notifyUrl));
+                $channel->setNotifyUrl(str_replace(':channel', $channelName, $notifyUrl));
             } else {
-                $channel->setNotifyUrl(url('PAY_NOTIFY', ['channel' => $name], '', true));
+                $channel->setNotifyUrl(url('PAY_NOTIFY', ['channel' => $channelName], '', true));
             }
 
             if (Config::get('pay.test')) {
