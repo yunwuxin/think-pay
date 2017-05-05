@@ -315,7 +315,7 @@ class Wechat extends Channel
             'appId'     => $this->appId,
             'package'   => 'prepay_id=' . $result['prepay_id'],
             'nonceStr'  => Str::random(),
-            'timeStamp' => time(),
+            'timeStamp' => (string) time(),
         ];
         $data['signType'] = 'MD5';
         $data['paySign']  = $this->generateSign($data);
