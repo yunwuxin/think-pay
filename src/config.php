@@ -15,8 +15,8 @@ return [
     'channels'   => [
         'alipay' => [
             'app_id'      => '',
-            'public_key'  => '',
-            'private_key' => ''
+            'public_key'  => '', //支付宝公钥
+            'private_key' => '',//应用私钥
         ],
         'wechat' => [
             'key'       => '',

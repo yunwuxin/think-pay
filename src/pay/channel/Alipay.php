@@ -40,9 +40,17 @@ class Alipay extends Channel
         if (empty($config['app_id']) || empty($config['public_key']) || empty($config['private_key'])) {
             throw new ConfigException;
         }
-        $this->appId      = $config['app_id'];
-        $this->publicKey  = $config['public_key'];
-        $this->privateKey = $config['private_key'];
+        $this->appId = $config['app_id'];
+        if (is_file($config['public_key'])) {
+            $this->publicKey = file_get_contents($config['public_key']);
+        } else {
+            $this->publicKey = $config['public_key'];
+        }
+        if (is_file($config['private_key'])) {
+            $this->privateKey = file_get_contents($config['private_key']);
+        } else {
+            $this->privateKey = $config['private_key'];
+        }
         if (!empty($config['sign_type'])) {
             $this->signType = $config['sign_type'];
         }
@@ -66,6 +74,95 @@ class Alipay extends Channel
         $result = $this->validateResponse($response, $method);
 
         return $result;
+    }
+
+    protected function buildParams($method, $bizContent, $extra = [])
+    {
+        $params = array_merge([
+            'app_id'      => $this->appId,
+            'method'      => $method,
+            'format'      => 'JSON',
+            'charset'     => 'utf-8',
+            'sign_type'   => 'RSA2',
+            'timestamp'   => Date::now()->format('Y-m-d H:i:s'),
+            'version'     => '1.0',
+            'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE)
+        ], $extra);
+
+        $params['sign'] = $this->generateSign($params);
+
+        return $params;
+    }
+
+    protected function generateSign($params)
+    {
+        $data = $this->buildSignContent($params);
+        $res  = $this->buildPrivateKey();
+        if ("RSA2" == $this->signType) {
+            openssl_sign($data, $sign, $res, OPENSSL_ALGO_SHA256);
+        } else {
+            openssl_sign($data, $sign, $res);
+        }
+        return base64_encode($sign);
+    }
+
+    /**
+     * 生成待签名内容
+     * @param $params
+     * @return string
+     */
+    protected function buildSignContent($params)
+    {
+        ksort($params);
+        return urldecode(http_build_query($params));
+    }
+
+    protected function buildPrivateKey()
+    {
+        return "-----BEGIN RSA PRIVATE KEY-----\n" .
+            wordwrap($this->privateKey, 64, "\n", true) .
+            "\n-----END RSA PRIVATE KEY-----";
+    }
+
+    /**
+     * @param Response $response
+     * @param          $method
+     * @return array
+     * @throws SignException
+     */
+    protected function validateResponse($response, $method)
+    {
+        $response = json_decode($response->getBody()->getContents(), true);
+
+        $key    = str_replace('.', '_', $method) . '_response';
+        $result = $response[$key];
+
+        if (empty($result['code']) || $result['code'] != 10000) {
+            throw new DomainException(isset($result['sub_msg']) ? $result['sub_msg'] : $result['msg']);
+        }
+        if (isset($response['sign'])) {
+            if (!$this->verifySign(json_encode($result, JSON_UNESCAPED_UNICODE), $response['sign'])) {
+                throw new SignException;
+            }
+        }
+        return $result;
+    }
+
+    protected function verifySign($data, $sign)
+    {
+        $res = $this->buildPublicKey();
+        if ('RSA2' == $this->signType) {
+            return (bool) openssl_verify($data, base64_decode($sign), $res, OPENSSL_ALGO_SHA256);
+        } else {
+            return (bool) openssl_verify($data, base64_decode($sign), $res);
+        }
+    }
+
+    protected function buildPublicKey()
+    {
+        return "-----BEGIN PUBLIC KEY-----\n" .
+            wordwrap($this->publicKey, 64, "\n", true) .
+            "\n-----END PUBLIC KEY-----";
     }
 
     /**
@@ -176,33 +273,6 @@ class Alipay extends Channel
         return $this->buildParams('alipay.trade.app.pay', $bizContent, ['notify_url' => $this->notifyUrl]);
     }
 
-    public function buildPreCreateParams(Payable $charge)
-    {
-        $bizContent = array_filter([
-            'out_trade_no'          => $charge->getTradeNo(),
-            'seller_id'             => $charge->getExtra('seller_id'),
-            'total_amount'          => $charge->getAmount() / 100,
-            'discountable_amount'   => $charge->getExtra('discountable_amount'),
-            'undiscountable_amount' => $charge->getExtra('undiscountable_amount'),
-            'buyer_logon_id'        => $charge->getExtra('buyer_logon_id'),
-            'subject'               => $charge->getSubject(),
-            'body'                  => $charge->getBody(),
-            'goods_detail'          => $charge->getExtra('goods_detail'),
-            'operator_id'           => $charge->getExtra('operator_id'),
-            'store_id'              => $charge->getExtra('store_id'),
-            'terminal_id'           => $charge->getExtra('terminal_id'),
-            'extend_params'         => $charge->getExtra('extend_params'),
-            'timeout_express'       => $charge->getExpire(function (Date $date) {
-                //todo
-            }),
-            'royalty_info'          => $charge->getExtra('royalty_info'),
-            'sub_merchant'          => $charge->getExtra('sub_merchant'),
-            'alipay_store_id'       => $charge->getExtra('alipay_store_id')
-        ]);
-
-        return $this->buildParams('alipay.trade.precreate', $bizContent, ['notify_url' => $this->notifyUrl]);
-    }
-
     public function wapPay(Payable $charge)
     {
         $bizContent = array_filter([
@@ -245,93 +315,31 @@ class Alipay extends Channel
         return $result;
     }
 
-    protected function buildParams($method, $bizContent, $extra = [])
+    public function buildPreCreateParams(Payable $charge)
     {
-        $params = array_merge([
-            'app_id'      => $this->appId,
-            'method'      => $method,
-            'format'      => 'JSON',
-            'charset'     => 'utf-8',
-            'sign_type'   => 'RSA2',
-            'timestamp'   => Date::now()->format('Y-m-d H:i:s'),
-            'version'     => '1.0',
-            'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE)
-        ], $extra);
+        $bizContent = array_filter([
+            'out_trade_no'          => $charge->getTradeNo(),
+            'seller_id'             => $charge->getExtra('seller_id'),
+            'total_amount'          => $charge->getAmount() / 100,
+            'discountable_amount'   => $charge->getExtra('discountable_amount'),
+            'undiscountable_amount' => $charge->getExtra('undiscountable_amount'),
+            'buyer_logon_id'        => $charge->getExtra('buyer_logon_id'),
+            'subject'               => $charge->getSubject(),
+            'body'                  => $charge->getBody(),
+            'goods_detail'          => $charge->getExtra('goods_detail'),
+            'operator_id'           => $charge->getExtra('operator_id'),
+            'store_id'              => $charge->getExtra('store_id'),
+            'terminal_id'           => $charge->getExtra('terminal_id'),
+            'extend_params'         => $charge->getExtra('extend_params'),
+            'timeout_express'       => $charge->getExpire(function (Date $date) {
+                //todo
+            }),
+            'royalty_info'          => $charge->getExtra('royalty_info'),
+            'sub_merchant'          => $charge->getExtra('sub_merchant'),
+            'alipay_store_id'       => $charge->getExtra('alipay_store_id')
+        ]);
 
-        $params['sign'] = $this->generateSign($params);
-
-        return $params;
-    }
-
-    /**
-     * @param Response $response
-     * @param          $method
-     * @return array
-     * @throws SignException
-     */
-    protected function validateResponse($response, $method)
-    {
-        $response = json_decode($response->getBody()->getContents(), true);
-
-        $key    = str_replace('.', '_', $method) . '_response';
-        $result = $response[$key];
-
-        if (empty($result['code']) || $result['code'] != 10000) {
-            throw new DomainException(isset($result['sub_msg']) ? $result['sub_msg'] : $result['msg']);
-        }
-        if (isset($response['sign'])) {
-            if (!$this->verifySign(json_encode($result, JSON_UNESCAPED_UNICODE), $response['sign'])) {
-                throw new SignException;
-            }
-        }
-        return $result;
-    }
-
-    protected function verifySign($data, $sign)
-    {
-        $res = $this->buildPublicKey();
-        if ('RSA2' == $this->signType) {
-            return (bool) openssl_verify($data, base64_decode($sign), $res, OPENSSL_ALGO_SHA256);
-        } else {
-            return (bool) openssl_verify($data, base64_decode($sign), $res);
-        }
-    }
-
-    protected function generateSign($params)
-    {
-        $data = $this->buildSignContent($params);
-        $res  = $this->buildPrivateKey();
-        if ("RSA2" == $this->signType) {
-            openssl_sign($data, $sign, $res, OPENSSL_ALGO_SHA256);
-        } else {
-            openssl_sign($data, $sign, $res);
-        }
-        return base64_encode($sign);
-    }
-
-    /**
-     * 生成待签名内容
-     * @param $params
-     * @return string
-     */
-    protected function buildSignContent($params)
-    {
-        ksort($params);
-        return urldecode(http_build_query($params));
-    }
-
-    protected function buildPublicKey()
-    {
-        return "-----BEGIN PUBLIC KEY-----\n" .
-            wordwrap($this->publicKey, 64, "\n", true) .
-            "\n-----END PUBLIC KEY-----";
-    }
-
-    protected function buildPrivateKey()
-    {
-        return "-----BEGIN RSA PRIVATE KEY-----\n" .
-            wordwrap($this->privateKey, 64, "\n", true) .
-            "\n-----END RSA PRIVATE KEY-----";
+        return $this->buildParams('alipay.trade.precreate', $bizContent, ['notify_url' => $this->notifyUrl]);
     }
 
 }

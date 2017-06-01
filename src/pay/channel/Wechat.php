@@ -48,11 +48,13 @@ class Wechat extends Channel
         if (empty($config['app_id']) || empty($config['mch_id']) || empty($config['key'])) {
             throw new ConfigException;
         }
-        $this->appId    = $config['app_id'];
-        $this->mchId    = $config['mch_id'];
-        $this->key      = $config['key'];
-        $this->certPath = $config['cert_path'];
-        $this->keyPath  = $config['key_path'];
+        $this->appId = $config['app_id'];
+        $this->mchId = $config['mch_id'];
+        $this->key   = $config['key'];
+        if (!empty($config['cert_path']) && !empty($config['key_path'])) {
+            $this->certPath = $config['cert_path'];
+            $this->keyPath  = $config['key_path'];
+        }
     }
 
     public function setTest()
