@@ -64,7 +64,7 @@ class Alipay extends Channel
     public function query(Payable $charge)
     {
         $bizContent = [
-            'trade_no' => $charge->getTradeNo()
+            'out_trade_no' => $charge->getTradeNo()
         ];
 
         $method   = 'alipay.trade.query';
@@ -244,7 +244,7 @@ class Alipay extends Channel
 
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete(new PurchaseResult('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], Date::parse($data['gmt_payment']), $data));
+            $charge->onComplete(new PurchaseResult('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], !empty($data['gmt_payment']) ? Date::parse($data['gmt_payment']) : null, $data));
         }
         return response('success');
     }
