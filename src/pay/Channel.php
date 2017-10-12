@@ -20,10 +20,6 @@ use yunwuxin\pay\interfaces\Transferable;
 
 abstract class Channel
 {
-    protected $liveEndpoint;
-    protected $testEndpoint;
-
-    protected $test = false;
 
     protected $notifyUrl;
 
@@ -40,26 +36,13 @@ abstract class Channel
         throw new InvalidArgumentException("Gateway [{$name}] not supported.");
     }
 
-    public function setTest()
-    {
-        $this->test = true;
-        return $this;
-    }
-
     public function setNotifyUrl($notifyUrl)
     {
         $this->notifyUrl = $notifyUrl;
         return $this;
     }
 
-    protected function endpoint()
-    {
-        if ($this->test) {
-            return $this->testEndpoint;
-        } else {
-            return $this->liveEndpoint;
-        }
-    }
+    abstract public function setTest();
 
     /**
      * 退款

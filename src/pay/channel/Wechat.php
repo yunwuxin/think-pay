@@ -14,16 +14,15 @@ namespace yunwuxin\pay\channel;
 use DomainException;
 use GuzzleHttp\Psr7\Response;
 use Jenssegers\Date\Date;
+use Symfony\Component\OptionsResolver\Exception\MissingOptionsException;
 use think\Cache;
 use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\entity\TransferResult;
-use yunwuxin\pay\exception\ConfigException;
-use yunwuxin\pay\exception\SignException;
-use yunwuxin\pay\http\Client;
-use yunwuxin\pay\http\Options;
+use yunwuxin\util\http\Client;
+use yunwuxin\util\http\Options;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
 use yunwuxin\pay\interfaces\Transferable;
@@ -43,10 +42,12 @@ class Wechat extends Channel
     protected $certPath;
     protected $keyPath;
 
+    protected $test = false;
+
     public function __construct($config)
     {
         if (empty($config['app_id']) || empty($config['mch_id']) || empty($config['key'])) {
-            throw new ConfigException;
+            throw new MissingOptionsException;
         }
         $this->appId = $config['app_id'];
         $this->mchId = $config['mch_id'];
@@ -59,8 +60,8 @@ class Wechat extends Channel
 
     public function setTest()
     {
-        parent::setTest();
-        $this->key = $this->getSignKey();
+        $this->test = true;
+        $this->key  = $this->getSignKey();
     }
 
     protected function getSignKey()
@@ -121,7 +122,7 @@ class Wechat extends Channel
         $sign = $this->generateSign($params);
 
         if ($sign != $params['sign']) {
-            throw new SignException;
+            throw new DomainException('签名验证失败');
         }
     }
 
@@ -266,7 +267,7 @@ class Wechat extends Channel
      * @param Payable $charge
      * @param string  $type
      * @return array
-     * @throws SignException
+     * @throws
      */
     public function unifiedOrder(Payable $charge, $type)
     {

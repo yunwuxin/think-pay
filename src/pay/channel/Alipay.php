@@ -10,50 +10,29 @@
 // +----------------------------------------------------------------------
 namespace yunwuxin\pay\channel;
 
-use DomainException;
-use GuzzleHttp\Psr7\Response;
 use Jenssegers\Date\Date;
 use think\Request;
+use yunwuxin\alipay\Client;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\entity\TransferResult;
-use yunwuxin\pay\exception\ConfigException;
-use yunwuxin\pay\exception\SignException;
-use yunwuxin\pay\http\Client;
-use yunwuxin\pay\http\Options;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
 use yunwuxin\pay\interfaces\Transferable;
 
 class Alipay extends Channel
 {
-    protected $liveEndpoint = "https://openapi.alipay.com/gateway.do";
-    protected $testEndpoint = "https://openapi.alipaydev.com/gateway.do";
-
-    protected $appId;
-    protected $publicKey;
-    protected $privateKey;
-    protected $signType = 'RSA2';
+    /** @var Client */
+    protected $client;
 
     public function __construct($config)
     {
-        if (empty($config['app_id']) || empty($config['public_key']) || empty($config['private_key'])) {
-            throw new ConfigException;
-        }
-        $this->appId = $config['app_id'];
-        if (is_file($config['public_key'])) {
-            $this->publicKey = file_get_contents($config['public_key']);
-        } else {
-            $this->publicKey = $config['public_key'];
-        }
-        if (is_file($config['private_key'])) {
-            $this->privateKey = file_get_contents($config['private_key']);
-        } else {
-            $this->privateKey = $config['private_key'];
-        }
-        if (!empty($config['sign_type'])) {
-            $this->signType = $config['sign_type'];
-        }
+        $this->client = new Client($config);
+    }
+
+    public function setTest()
+    {
+        $this->client->setTest();
     }
 
     /**
@@ -67,102 +46,9 @@ class Alipay extends Channel
             'out_trade_no' => $charge->getTradeNo()
         ];
 
-        $method   = 'alipay.trade.query';
-        $params   = $this->buildParams($method, $bizContent);
-        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
+        $method = 'alipay.trade.query';
 
-        $result = $this->validateResponse($response, $method);
-
-        return $result;
-    }
-
-    protected function buildParams($method, $bizContent, $extra = [])
-    {
-        $params = array_merge([
-            'app_id'      => $this->appId,
-            'method'      => $method,
-            'format'      => 'JSON',
-            'charset'     => 'utf-8',
-            'sign_type'   => 'RSA2',
-            'timestamp'   => Date::now()->format('Y-m-d H:i:s'),
-            'version'     => '1.0',
-            'biz_content' => json_encode($bizContent, JSON_UNESCAPED_UNICODE)
-        ], $extra);
-
-        $params['sign'] = $this->generateSign($params);
-
-        return $params;
-    }
-
-    protected function generateSign($params)
-    {
-        $data = $this->buildSignContent($params);
-        $res  = $this->buildPrivateKey();
-        if ("RSA2" == $this->signType) {
-            openssl_sign($data, $sign, $res, OPENSSL_ALGO_SHA256);
-        } else {
-            openssl_sign($data, $sign, $res);
-        }
-        return base64_encode($sign);
-    }
-
-    /**
-     * 生成待签名内容
-     * @param $params
-     * @return string
-     */
-    protected function buildSignContent($params)
-    {
-        ksort($params);
-        return urldecode(http_build_query($params));
-    }
-
-    protected function buildPrivateKey()
-    {
-        return "-----BEGIN RSA PRIVATE KEY-----\n" .
-            wordwrap($this->privateKey, 64, "\n", true) .
-            "\n-----END RSA PRIVATE KEY-----";
-    }
-
-    /**
-     * @param Response $response
-     * @param          $method
-     * @return array
-     * @throws SignException
-     */
-    protected function validateResponse($response, $method)
-    {
-        $response = json_decode($response->getBody()->getContents(), true);
-
-        $key    = str_replace('.', '_', $method) . '_response';
-        $result = $response[$key];
-
-        if (empty($result['code']) || $result['code'] != 10000) {
-            throw new DomainException(isset($result['sub_msg']) ? $result['sub_msg'] : $result['msg']);
-        }
-        if (isset($response['sign'])) {
-            if (!$this->verifySign(json_encode($result, JSON_UNESCAPED_UNICODE), $response['sign'])) {
-                throw new SignException;
-            }
-        }
-        return $result;
-    }
-
-    protected function verifySign($data, $sign)
-    {
-        $res = $this->buildPublicKey();
-        if ('RSA2' == $this->signType) {
-            return (bool) openssl_verify($data, base64_decode($sign), $res, OPENSSL_ALGO_SHA256);
-        } else {
-            return (bool) openssl_verify($data, base64_decode($sign), $res);
-        }
-    }
-
-    protected function buildPublicKey()
-    {
-        return "-----BEGIN PUBLIC KEY-----\n" .
-            wordwrap($this->publicKey, 64, "\n", true) .
-            "\n-----END PUBLIC KEY-----";
+        return $this->client->execute($method, $bizContent);
     }
 
     /**
@@ -182,13 +68,9 @@ class Alipay extends Channel
             'terminal_id'    => $refund->getExtra('terminal_id')
         ]);
 
-        $method   = 'alipay.trade.refund';
-        $params   = $this->buildParams($method, $bizContent);
-        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
+        $method = 'alipay.trade.refund';
 
-        $result = $this->validateResponse($response, $method);
-
-        return $result;
+        return $this->client->execute($method, $bizContent);
     }
 
     public function refundQuery(Refundable $refund)
@@ -198,12 +80,8 @@ class Alipay extends Channel
             'out_request_no' => $refund->getRefundNo()
         ];
         $method     = 'alipay.trade.fastpay.refund.query';
-        $params     = $this->buildParams($method, $bizContent);
-        $response   = Client::get($this->endpoint(), Options::makeWithQuery($params));
 
-        $result = $this->validateResponse($response, $method);
-
-        return $result;
+        return $this->client->execute($method, $bizContent);
     }
 
     public function transfer(Transferable $transfer)
@@ -220,11 +98,7 @@ class Alipay extends Channel
 
         $method = 'alipay.fund.trans.toaccount.transfer';
 
-        $params = $this->buildParams($method, $bizContent);
-
-        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
-
-        $result = $this->validateResponse($response, $method);
+        $result = $this->client->execute($method, $bizContent);
 
         return new TransferResult($result['order_id'], $result['pay_date']);
     }
@@ -232,15 +106,12 @@ class Alipay extends Channel
     public function completePurchase(Request $request)
     {
         $data = $request->post();
-        $sign = $data['sign'];
 
-        $this->signType = $data['sign_type'];
+        $sign = $data['sign'];
 
         unset($data['sign'], $data['sign_type']);
 
-        if (!$this->verifySign($this->buildSignContent($data), $sign)) {
-            throw new SignException;
-        }
+        $this->client->verifySign($this->client->buildSignContent($data), $sign);
 
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
@@ -270,7 +141,7 @@ class Alipay extends Channel
             'store_id'             => $charge->getExtra('store_id')
         ]);
 
-        return $this->buildParams('alipay.trade.app.pay', $bizContent, ['notify_url' => $this->notifyUrl]);
+        return $this->client->buildParams('alipay.trade.app.pay', $bizContent, ['notify_url' => $this->notifyUrl]);
     }
 
     public function wapPay(Payable $charge)
@@ -295,27 +166,16 @@ class Alipay extends Channel
             'store_id'             => $charge->getExtra('store_id')
         ]);
 
-        $params = $this->buildParams('alipay.trade.wap.pay', $bizContent, [
+        $params = $this->client->buildParams('alipay.trade.wap.pay', $bizContent, [
             'notify_url' => $this->notifyUrl,
             'return_url' => $charge->getExtra('return_url')
         ]);
 
-        return sprintf('%s?%s', $this->endpoint(), http_build_query($params));
+        return sprintf('%s?%s', $this->client->endpoint(), http_build_query($params));
 
     }
 
     public function preCreate(Payable $charge)
-    {
-        $params = $this->buildPreCreateParams($charge);
-
-        $response = Client::get($this->endpoint(), Options::makeWithQuery($params));
-
-        $result = $this->validateResponse($response, 'alipay.trade.precreate');
-
-        return $result;
-    }
-
-    public function buildPreCreateParams(Payable $charge)
     {
         $bizContent = array_filter([
             'out_trade_no'          => $charge->getTradeNo(),
@@ -339,7 +199,11 @@ class Alipay extends Channel
             'alipay_store_id'       => $charge->getExtra('alipay_store_id')
         ]);
 
-        return $this->buildParams('alipay.trade.precreate', $bizContent, ['notify_url' => $this->notifyUrl]);
+        $method = 'alipay.trade.precreate';
+
+        $extra = ['notify_url' => $this->notifyUrl];
+
+        return $this->client->execute($method, $bizContent, $extra);
     }
 
 }

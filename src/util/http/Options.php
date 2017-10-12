@@ -9,7 +9,7 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay\http;
+namespace yunwuxin\util\http;
 
 class Options
 {
