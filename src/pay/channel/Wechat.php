@@ -14,7 +14,7 @@ namespace yunwuxin\pay\channel;
 use DomainException;
 use GuzzleHttp\Psr7\Response;
 use Jenssegers\Date\Date;
-use Symfony\Component\OptionsResolver\Exception\MissingOptionsException;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use think\Cache;
 use think\helper\Str;
 use think\Request;
@@ -33,47 +33,65 @@ class Wechat extends Channel
     const TYPE_JSAPI  = 'JSAPI';
     const TYPE_APP    = 'APP';
 
-    protected $liveEndpoint = 'https://api.mch.weixin.qq.com/pay';
-    protected $testEndpoint = 'https://api.mch.weixin.qq.com/sandboxnew/pay';
+    protected $endpoint = 'https://api.mch.weixin.qq.com';
 
-    protected $appId;
-    protected $mchId;
-    protected $key;
-    protected $certPath;
-    protected $keyPath;
+    protected $options;
 
     protected $test = false;
 
-    public function __construct($config)
+    public function __construct($options)
     {
-        if (empty($config['app_id']) || empty($config['mch_id']) || empty($config['key'])) {
-            throw new MissingOptionsException;
-        }
-        $this->appId = $config['app_id'];
-        $this->mchId = $config['mch_id'];
-        $this->key   = $config['key'];
-        if (!empty($config['cert_path']) && !empty($config['key_path'])) {
-            $this->certPath = $config['cert_path'];
-            $this->keyPath  = $config['key_path'];
-        }
+        $resolver = new OptionsResolver();
+
+        $this->configureOptions($resolver);
+
+        $this->options = $resolver->resolve($options);
+    }
+
+    protected function configureOptions(OptionsResolver $resolver)
+    {
+        $resolver->setRequired(['app_id', 'mch_id', 'key']);
+
+        $resolver->setDefined(['public_key', 'private_key']);
+
+        $resolver->setNormalizer('public_key', function (\Symfony\Component\OptionsResolver\Options $options, $value) {
+            if (!empty($value) && !is_file($value)) {
+                $fn = tempnam(sys_get_temp_dir(), 'think-pay-wechat-public-');
+                file_put_contents($fn, "-----BEGIN CERTIFICATE-----\n" . wordwrap($value, 64, "\n", true) . "\n-----END CERTIFICATE-----");
+                return $fn;
+            }
+
+            return $value;
+        });
+
+        $resolver->setNormalizer('private_key', function (\Symfony\Component\OptionsResolver\Options $options, $value) {
+            if (!empty($value) && !is_file($value)) {
+                $fn = tempnam(sys_get_temp_dir(), 'think-pay-wechat-private-');
+                file_put_contents($fn, "-----BEGIN PRIVATE KEY-----\n" . wordwrap($value, 64, "\n", true) . "\n-----END PRIVATE KEY-----");
+                return $fn;
+            }
+
+            return $value;
+        });
     }
 
     public function setTest()
     {
         $this->test = true;
-        $this->key  = $this->getSignKey();
+
+        $this->options['key'] = $this->getSignKey();
     }
 
     protected function getSignKey()
     {
         return Cache::remember('wechat_sandbox_key', function () {
             $params         = [
-                'mch_id'    => $this->mchId,
+                'mch_id'    => $this->options['mch_id'],
                 'nonce_str' => Str::random()
             ];
             $params['sign'] = $this->generateSign($params);
 
-            $response = Client::post($this->endpoint('getsignkey'), Options::makeWithBody(array2xml($params)));
+            $response = Client::post($this->endpoint('pay/getsignkey'), Options::makeWithBody(array2xml($params)));
 
             $result = $this->validateResponse($response);
 
@@ -86,17 +104,17 @@ class Wechat extends Channel
         unset($params['sign']);
         ksort($params);
         $query = urldecode(http_build_query($params));
-        $query .= "&key={$this->key}";
+        $query .= "&key={$this->options['key']}";
         return strtoupper(md5($query));
     }
 
     protected function endpoint($uri = '')
     {
         if ($this->test) {
-            return $this->testEndpoint . '/' . $uri;
-        } else {
-            return $this->liveEndpoint . '/' . $uri;
+            return $this->endpoint . '/sandboxnew/' . $uri;
         }
+
+        return $this->endpoint . '/' . $uri;
     }
 
     /**
@@ -130,7 +148,7 @@ class Wechat extends Channel
     {
         $params = array_filter([
             'mch_appid'        => $transfer->getExtra('mch_appid'),
-            'mchid'            => $this->mchId,
+            'mchid'            => $this->options['mch_id'],
             'device_info'      => $transfer->getExtra('device_info'),
             'nonce_str'        => Str::random(),
             'partner_trade_no' => $transfer->getAccount(),
@@ -147,8 +165,8 @@ class Wechat extends Channel
         $xml = array2xml($params);
 
         $response = Client::post("https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers", Options::makeWithBody($xml)->setExtra([
-            'cert'    => $this->certPath,
-            'ssl_key' => $this->keyPath
+            'cert'    => $this->options['public_key'],
+            'ssl_key' => $this->options['private_key']
         ]));
 
         $result = $this->validateResponse($response);
@@ -159,8 +177,8 @@ class Wechat extends Channel
     public function query(Payable $charge)
     {
         $params = [
-            'appid'        => $this->appId,
-            'mch_id'       => $this->mchId,
+            'appid'        => $this->options['app_id'],
+            'mch_id'       => $this->options['mch_id'],
             'nonce_str'    => Str::random(),
             'sign_type'    => 'MD5',
             'out_trade_no' => $charge->getTradeNo()
@@ -168,7 +186,7 @@ class Wechat extends Channel
 
         $params['sign'] = $this->generateSign($params);
 
-        $response = Client::post($this->endpoint('orderquery'), Options::makeWithBody(array2xml($params)));
+        $response = Client::post($this->endpoint('pay/orderquery'), Options::makeWithBody(array2xml($params)));
         $result   = $this->validateResponse($response);
 
         return $result;
@@ -176,14 +194,15 @@ class Wechat extends Channel
 
     /**
      * 退款
+     *
      * @param Refundable $refund
      * @return array
      */
     public function refund(Refundable $refund)
     {
         $params = array_filter([
-            'appid'           => $this->appId,
-            'mch_id'          => $this->mchId,
+            'appid'           => $this->options['app_id'],
+            'mch_id'          => $this->options['mch_id'],
             'device_info'     => $refund->getExtra('device_info'),
             'nonce_str'       => Str::random(),
             'sign_type'       => 'MD5',
@@ -193,16 +212,16 @@ class Wechat extends Channel
             'refund_fee'      => $refund->getAmount(),
             'refund_fee_type' => $refund->getExtra('refund_fee_type'),
             'refund_account'  => $refund->getExtra('refund_account'),
-            'op_user_id'      => $refund->getExtra('op_user_id') ?: $this->mchId
+            'op_user_id'      => $refund->getExtra('op_user_id') ?: $this->options['mch_id']
         ]);
 
         $params['sign'] = $this->generateSign($params);
 
         $xml = array2xml($params);
 
-        $response = Client::post("https://api.mch.weixin.qq.com/secapi/pay/refund", Options::makeWithBody($xml)->setExtra([
-            'cert'    => $this->certPath,
-            'ssl_key' => $this->keyPath
+        $response = Client::post($this->endpoint('secapi/pay/refund'), Options::makeWithBody($xml)->setExtra([
+            'cert'    => $this->options['public_key'],
+            'ssl_key' => $this->options['private_key']
         ]));
 
         $result = $this->validateResponse($response);
@@ -213,8 +232,8 @@ class Wechat extends Channel
     public function refundQuery(Refundable $refund)
     {
         $params = [
-            'appid'         => $this->appId,
-            'mch_id'        => $this->mchId,
+            'appid'         => $this->options['app_id'],
+            'mch_id'        => $this->options['mch_id'],
             'device_info'   => $refund->getExtra('device_info'),
             'nonce_str'     => Str::random(),
             'sign_type'     => 'MD5',
@@ -225,7 +244,7 @@ class Wechat extends Channel
 
         $xml = array2xml($params);
 
-        $response = Client::post($this->endpoint('refundquery'), Options::makeWithBody($xml));
+        $response = Client::post($this->endpoint('pay/refundquery'), Options::makeWithBody($xml));
 
         $result = $this->validateResponse($response);
 
@@ -251,8 +270,8 @@ class Wechat extends Channel
     {
         $result       = $this->unifiedOrder($charge, Wechat::TYPE_APP);
         $data         = [
-            'appid'     => $this->appId,
-            'partnerid' => $this->mchId,
+            'appid'     => $this->options['app_id'],
+            'partnerid' => $this->options['mch_id'],
             'prepayid'  => $result['prepay_id'],
             'package'   => 'Sign=WXPay',
             'noncestr'  => Str::random(),
@@ -264,6 +283,7 @@ class Wechat extends Channel
 
     /**
      * 统一下单
+     *
      * @param Payable $charge
      * @param string  $type
      * @return array
@@ -272,8 +292,8 @@ class Wechat extends Channel
     public function unifiedOrder(Payable $charge, $type)
     {
         $params = array_filter([
-            'appid'            => $this->appId,
-            'mch_id'           => $this->mchId,
+            'appid'            => $this->options['app_id'],
+            'mch_id'           => $this->options['mch_id'],
             'device_info'      => $charge->getExtra('device_info'),
             'sign_type'        => 'MD5',
             'attach'           => $charge->getExtra('attach'),
@@ -300,7 +320,7 @@ class Wechat extends Channel
 
         $xml = array2xml($params);
 
-        $response = Client::post($this->endpoint('unifiedorder'), Options::makeWithBody($xml));
+        $response = Client::post($this->endpoint('pay/unifiedorder'), Options::makeWithBody($xml));
 
         $result = $this->validateResponse($response);
 
@@ -315,10 +335,10 @@ class Wechat extends Channel
     {
         $result           = $this->unifiedOrder($charge, self::TYPE_JSAPI);
         $data             = [
-            'appId'     => $this->appId,
+            'appId'     => $this->options['app_id'],
             'package'   => 'prepay_id=' . $result['prepay_id'],
             'nonceStr'  => Str::random(),
-            'timeStamp' => (string) time(),
+            'timeStamp' => (string)time(),
         ];
         $data['signType'] = 'MD5';
         $data['paySign']  = $this->generateSign($data);
