@@ -194,7 +194,6 @@ class Wechat extends Channel
 
     /**
      * 退款
-     *
      * @param Refundable $refund
      * @return array
      */
@@ -253,6 +252,7 @@ class Wechat extends Channel
 
     public function completePurchase(Request $request)
     {
+        libxml_disable_entity_loader(true);
         $data = xml2array($request->getContent());
         $this->validateSign($data);
         $charge = $this->retrieveCharge($data['out_trade_no']);
@@ -281,9 +281,22 @@ class Wechat extends Channel
         return $data;
     }
 
+    public function buildXiaoParams(Payable $charge)
+    {
+        $result       = $this->unifiedOrder($charge, Wechat::TYPE_JSAPI);
+        $data         = [
+            'appId'     => $this->options['app_id'],
+            'timeStamp' => time(),
+            'nonceStr'  => Str::random(),
+            'package'   => "prepay_id={$result['prepay_id']}",
+            'signType'  => 'MD5'
+        ];
+        $data['paySign'] = $this->generateSign($data);
+        return $data;
+    }
+
     /**
      * 统一下单
-     *
      * @param Payable $charge
      * @param string  $type
      * @return array
@@ -338,7 +351,7 @@ class Wechat extends Channel
             'appId'     => $this->options['app_id'],
             'package'   => 'prepay_id=' . $result['prepay_id'],
             'nonceStr'  => Str::random(),
-            'timeStamp' => (string)time(),
+            'timeStamp' => (string) time(),
         ];
         $data['signType'] = 'MD5';
         $data['paySign']  = $this->generateSign($data);
