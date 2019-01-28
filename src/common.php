@@ -9,9 +9,9 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-use think\Config;
-use think\Hook;
-use think\Route;
+use think\facade\Config;
+use think\facade\Hook;
+use think\facade\Route;
 
 function array2xml($arr, $root = 'xml')
 {

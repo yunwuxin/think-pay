@@ -15,7 +15,7 @@ use DomainException;
 use GuzzleHttp\Psr7\Response;
 use Jenssegers\Date\Date;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use think\Cache;
+use think\facade\Cache;
 use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\Channel;

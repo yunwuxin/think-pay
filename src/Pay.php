@@ -11,7 +11,7 @@
 namespace yunwuxin;
 
 use InvalidArgumentException;
-use think\Config;
+use think\facade\Config;
 use think\helper\Str;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\Gateway;

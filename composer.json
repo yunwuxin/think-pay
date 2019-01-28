@@ -11,14 +11,14 @@
     ],
     "require": {
         "php": ">=5.5",
-        "topthink/think-installer": "^1.0",
+        "topthink/think-installer": "^2.0",
         "guzzlehttp/guzzle": "~6.0",
         "topthink/think-helper": "^1.0",
         "jenssegers/date": "^3.2",
         "symfony/options-resolver": "^3.3"
     },
     "require-dev": {
-        "topthink/framework": "^5.0"
+        "topthink/framework": "^5.1"
     },
     "autoload": {
         "psr-4": {

@@ -11,7 +11,7 @@
 namespace yunwuxin\pay;
 
 use InvalidArgumentException;
-use think\Config;
+use think\facade\Config;
 use think\helper\Str;
 use think\Request;
 use yunwuxin\pay\interfaces\Payable;
