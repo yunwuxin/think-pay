@@ -275,7 +275,7 @@ class Wechat extends Channel
             'prepayid'  => $result['prepay_id'],
             'package'   => 'Sign=WXPay',
             'noncestr'  => Str::random(),
-            'timestamp' => time(),
+            'timestamp' => (string) time(),
         ];
         $data['sign'] = $this->generateSign($data);
         return $data;
@@ -283,10 +283,10 @@ class Wechat extends Channel
 
     public function buildXiaoParams(Payable $charge)
     {
-        $result       = $this->unifiedOrder($charge, Wechat::TYPE_JSAPI);
-        $data         = [
+        $result          = $this->unifiedOrder($charge, Wechat::TYPE_JSAPI);
+        $data            = [
             'appId'     => $this->options['app_id'],
-            'timeStamp' => time(),
+            'timeStamp' => (string) time(),
             'nonceStr'  => Str::random(),
             'package'   => "prepay_id={$result['prepay_id']}",
             'signType'  => 'MD5'
