@@ -21,11 +21,11 @@ use think\Request;
 use yunwuxin\pay\Channel;
 use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\entity\TransferResult;
-use yunwuxin\util\http\Client;
-use yunwuxin\util\http\Options;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
 use yunwuxin\pay\interfaces\Transferable;
+use yunwuxin\util\http\Client;
+use yunwuxin\util\http\Options;
 
 class Wechat extends Channel
 {
@@ -87,7 +87,7 @@ class Wechat extends Channel
         return Cache::remember('wechat_sandbox_key', function () {
             $params         = [
                 'mch_id'    => $this->options['mch_id'],
-                'nonce_str' => Str::random()
+                'nonce_str' => Str::random(),
             ];
             $params['sign'] = $this->generateSign($params);
 
@@ -157,7 +157,7 @@ class Wechat extends Channel
             're_user_name'     => $transfer->getRealName(),
             'amount'           => $transfer->getAmount(),
             'desc'             => $transfer->getRemark(),
-            'spbill_create_ip' => request()->ip()
+            'spbill_create_ip' => request()->ip(),
         ]);
 
         $params['sign'] = $this->generateSign($params);
@@ -166,7 +166,7 @@ class Wechat extends Channel
 
         $response = Client::post("https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers", Options::makeWithBody($xml)->setExtra([
             'cert'    => $this->options['public_key'],
-            'ssl_key' => $this->options['private_key']
+            'ssl_key' => $this->options['private_key'],
         ]));
 
         $result = $this->validateResponse($response);
@@ -181,13 +181,19 @@ class Wechat extends Channel
             'mch_id'       => $this->options['mch_id'],
             'nonce_str'    => Str::random(),
             'sign_type'    => 'MD5',
-            'out_trade_no' => $charge->getTradeNo()
+            'out_trade_no' => $charge->getTradeNo(),
         ];
 
         $params['sign'] = $this->generateSign($params);
 
         $response = Client::post($this->endpoint('pay/orderquery'), Options::makeWithBody(array2xml($params)));
-        $result   = $this->validateResponse($response);
+        $data     = $this->validateResponse($response);
+
+        if ($data['result_code'] == 'SUCCESS' && $data['trade_state'] == 'SUCCESS') {
+            $result = new PurchaseResult('wechat', $data['transaction_id'], $data['total_fee'], true, Date::parse($data['time_end']), $data);
+        } else {
+            $result = new PurchaseResult('wechat', null, null, false, null, $data);
+        }
 
         return $result;
     }
@@ -211,7 +217,7 @@ class Wechat extends Channel
             'refund_fee'      => $refund->getAmount(),
             'refund_fee_type' => $refund->getExtra('refund_fee_type'),
             'refund_account'  => $refund->getExtra('refund_account'),
-            'op_user_id'      => $refund->getExtra('op_user_id') ?: $this->options['mch_id']
+            'op_user_id'      => $refund->getExtra('op_user_id') ?: $this->options['mch_id'],
         ]);
 
         $params['sign'] = $this->generateSign($params);
@@ -220,7 +226,7 @@ class Wechat extends Channel
 
         $response = Client::post($this->endpoint('secapi/pay/refund'), Options::makeWithBody($xml)->setExtra([
             'cert'    => $this->options['public_key'],
-            'ssl_key' => $this->options['private_key']
+            'ssl_key' => $this->options['private_key'],
         ]));
 
         $result = $this->validateResponse($response);
@@ -236,7 +242,7 @@ class Wechat extends Channel
             'device_info'   => $refund->getExtra('device_info'),
             'nonce_str'     => Str::random(),
             'sign_type'     => 'MD5',
-            'out_refund_no' => $refund->getRefundNo()
+            'out_refund_no' => $refund->getRefundNo(),
         ];
 
         $params['sign'] = $this->generateSign($params);
@@ -261,7 +267,7 @@ class Wechat extends Channel
         }
         $return = [
             'return_code' => 'SUCCESS',
-            'return_msg'  => 'OK'
+            'return_msg'  => 'OK',
         ];
         return response(array2xml($return));
     }
@@ -289,7 +295,7 @@ class Wechat extends Channel
             'timeStamp' => (string) time(),
             'nonceStr'  => Str::random(),
             'package'   => "prepay_id={$result['prepay_id']}",
-            'signType'  => 'MD5'
+            'signType'  => 'MD5',
         ];
         $data['paySign'] = $this->generateSign($data);
         return $data;
@@ -326,7 +332,7 @@ class Wechat extends Channel
             'notify_url'       => $this->notifyUrl,
             'product_id'       => $charge->getExtra('product_id'),
             'limit_pay'        => $charge->getExtra('limit_pay'),
-            'openid'           => $charge->getExtra('openid')
+            'openid'           => $charge->getExtra('openid'),
         ]);
 
         $params['sign'] = $this->generateSign($params);
