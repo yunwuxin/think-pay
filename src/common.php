@@ -9,35 +9,33 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-use think\facade\Config;
-use think\facade\Hook;
-use think\facade\Route;
+namespace yunwuxin\pay {
 
-function array2xml($arr, $root = 'xml')
-{
-    $xml = "<$root>";
-    foreach ($arr as $key => $val) {
-        if (is_numeric($val)) {
-            $xml .= "<" . $key . ">" . $val . "</" . $key . ">";
-        } else {
-            $xml .= "<" . $key . "><![CDATA[" . $val . "]]></" . $key . ">";
+    function array2xml($arr, $root = 'xml')
+    {
+        $xml = "<$root>";
+        foreach ($arr as $key => $val) {
+            if (is_numeric($val)) {
+                $xml .= "<" . $key . ">" . $val . "</" . $key . ">";
+            } else {
+                $xml .= "<" . $key . "><![CDATA[" . $val . "]]></" . $key . ">";
+            }
         }
+        $xml .= "</xml>";
+        return $xml;
     }
-    $xml .= "</xml>";
-    return $xml;
-}
 
-function xml2array($xml)
-{
-    return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
-}
-
-Hook::add('app_init', function () {
-    //注册路由
-    if (Config::get('pay.route')) {
-        Route::any([
-            "PAY_NOTIFY",
-            "pay/:channel/notify"
-        ], '\\yunwuxin\\pay\\NotifyController@index', ['complete_match' => true]);
+    function xml2array($xml)
+    {
+        return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     }
-});
+
+    function convert_key($key, $type)
+    {
+        $type = strtoupper($type);
+
+        return "-----BEGIN {$type}-----\n" .
+            wordwrap($key, 64, "\n", true) .
+            "\n-----END {$type}-----";
+    }
+}

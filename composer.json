@@ -1,7 +1,7 @@
 {
     "name": "yunwuxin/think-pay",
-    "description": "thinkphp5的支付SDK",
-    "type": "think-extend",
+    "description": "thinkphp6的支付SDK",
+    "type": "library",
     "license": "Apache-2.0",
     "authors": [
         {
@@ -10,27 +10,28 @@
         }
     ],
     "require": {
-        "php": ">=5.5",
-        "topthink/think-installer": "^2.0",
-        "guzzlehttp/guzzle": "~6.0",
-        "topthink/think-helper": "^1.0",
-        "jenssegers/date": "^3.2",
-        "symfony/options-resolver": "^3.3"
-    },
-    "require-dev": {
-        "topthink/framework": "^5.1"
+        "topthink/framework": "^6.0",
+        "symfony/options-resolver": "^3.3",
+        "php-http/guzzle6-adapter": "^2.0",
+        "nesbot/carbon": "^2.28",
+        "php-http/message": "^1.8"
     },
     "autoload": {
         "psr-4": {
-            "yunwuxin\\": "src"
+            "yunwuxin\\pay\\": "src/"
         },
         "files": [
             "src/common.php"
         ]
     },
     "extra": {
-        "think-config": {
-            "pay": "src/config.php"
+        "think": {
+            "services": [
+                "yunwuxin\\pay\\Service"
+            ],
+            "config": {
+                "auth": "src/config.php"
+            }
         }
     }
 }

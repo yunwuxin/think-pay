@@ -10,21 +10,23 @@
 // +----------------------------------------------------------------------
 
 return [
-    'test'       => true,//沙箱模式
+    'sandbox'    => true,//沙箱模式
     'charge'     => 'app\\model\\Charge',
     'channels'   => [
         'alipay' => [
+            'type'        => 'alipay',
             'app_id'      => '',
             'public_key'  => '', //支付宝公钥
             'private_key' => '',//应用私钥
         ],
         'wechat' => [
-            'key'       => '',
-            'app_id'    => '',
-            'mch_id'    => '',
-            'cert_path' => '',
-            'key_path'  => ''
-        ]
+            'type'        => 'wechat',
+            'key'         => '',
+            'app_id'      => '',
+            'mch_id'      => '',
+            'public_key'  => '',
+            'private_key' => '',
+        ],
     ],
     'notify_url' => '',//留空则设为PAY_NOTIFY对应的路由
     'route'      => true,//是否注册路由
