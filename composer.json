@@ -30,7 +30,7 @@
                 "yunwuxin\\pay\\Service"
             ],
             "config": {
-                "auth": "src/config.php"
+                "pay": "src/config.php"
             }
         }
     }
