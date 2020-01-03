@@ -9,15 +9,14 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay\gateway\wechat;
+namespace yunwuxin\pay\gateway\alipay;
 
-use yunwuxin\pay\channel\Wechat;
 use yunwuxin\pay\entity\PurchaseResponse;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
-use yunwuxin\pay\request\wechat\UnifiedOrderRequest;
+use yunwuxin\pay\request\alipay\TradePreCreateRequest;
 
-class Native extends Gateway
+class Scan extends Gateway
 {
 
     /**
@@ -27,10 +26,10 @@ class Native extends Gateway
      */
     public function purchase(Payable $charge)
     {
-        $request = $this->channel->createRequest(UnifiedOrderRequest::class, $charge, Wechat::TYPE_NATIVE);
+        $request = $this->channel->createRequest(TradePreCreateRequest::class, $charge);
 
         $result = $this->channel->sendRequest($request);
 
-        return new PurchaseResponse($result['code_url'], PurchaseResponse::TYPE_SCAN);
+        return new PurchaseResponse($result['qr_code'], PurchaseResponse::TYPE_SCAN);
     }
 }
