@@ -57,7 +57,10 @@ abstract class Channel
 
     protected function getHttpClientConfig()
     {
-        return [];
+        return [
+            'connect_timeout' => 5,
+            'timeout'         => 5,
+        ];
     }
 
     public function getOption($name)

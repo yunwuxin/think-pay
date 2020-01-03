@@ -81,13 +81,16 @@ class Wechat extends Channel
 
     protected function getHttpClientConfig()
     {
+        $config = parent::getHttpClientConfig();
+
         if ($this->getOption('cert') && $this->getOption('ssl_key')) {
-            return [
+            $config = array_merge($config, [
                 'cert'    => $this->getOption('cert'),
                 'ssl_key' => $this->getOption('ssl_key'),
-            ];
+            ]);
         }
-        return [];
+
+        return $config;
     }
 
     protected function getSignKey()
@@ -185,6 +188,6 @@ class Wechat extends Channel
     public function setSandbox()
     {
         $this->options['key'] = $this->getSignKey();
-        return $this->setSandbox();
+        return parent::setSandbox();
     }
 }
