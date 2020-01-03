@@ -21,7 +21,7 @@ class Payment extends Manager
 
     public function gateway(string $name)
     {
-        [$channel, $gateway] = explode('.', $name);
+        [$channel, $gateway] = explode('.', $name, 2);
         return $this->channel($channel)->gateway($gateway);
     }
 
@@ -59,7 +59,7 @@ class Payment extends Manager
 
     protected function resolveConfig(string $name)
     {
-        return $this->getChannelConfig($name);
+        return Arr::except($this->getChannelConfig($name), 'type');
     }
 
     protected function createDriver(string $name)
