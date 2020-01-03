@@ -6,7 +6,7 @@ use think\helper\Str;
 
 class GetSignKeyRequest extends Request
 {
-    public function __construct($mchId)
+    public function __invoke($mchId)
     {
         $this->params = [
             'mch_id'    => $mchId,

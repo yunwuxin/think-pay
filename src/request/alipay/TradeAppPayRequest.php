@@ -8,7 +8,10 @@ class TradeAppPayRequest extends Request
 {
     protected $method = 'alipay.trade.app.pay';
 
-    public function __construct(Payable $payable)
+    /**
+     * @param Payable $payable
+     */
+    public function __invoke(Payable $payable)
     {
         $this->bizContent = [
             'body'                 => $payable->getBody(),

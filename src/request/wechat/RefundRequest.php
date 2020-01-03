@@ -9,7 +9,7 @@ class RefundRequest extends Request
 {
     protected $uri = 'secapi/pay/refund';
 
-    public function __construct(Refundable $refund)
+    public function __invoke(Refundable $refund)
     {
         $this->params = array_filter([
             'appid'           => $this->channel->getOption('app_id'),

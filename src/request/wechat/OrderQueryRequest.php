@@ -9,7 +9,7 @@ class OrderQueryRequest extends Request
 {
     protected $uri = 'pay/orderquery';
 
-    public function __construct(Payable $payable)
+    public function __invoke(Payable $payable)
     {
         $this->params = [
             'appid'        => $this->channel->getOption('app_id'),

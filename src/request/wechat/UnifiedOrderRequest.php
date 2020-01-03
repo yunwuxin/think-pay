@@ -10,7 +10,7 @@ class UnifiedOrderRequest extends Request
 {
     protected $uri = 'pay/unifiedorder';
 
-    public function __construct(Payable $charge, $type)
+    public function __invoke(Payable $charge, $type)
     {
         $this->params = array_filter([
             'appid'            => $this->channel->getOption('app_id'),

@@ -75,9 +75,11 @@ abstract class Channel
     public function createRequest($class, ...$args)
     {
         /** @var \yunwuxin\pay\Request $request */
-        $request = new $class(...$args);
+        $request = new $class($this);
 
-        return $request->setChannel($this);
+        ($request)(...$args);
+
+        return $request;
     }
 
     /**

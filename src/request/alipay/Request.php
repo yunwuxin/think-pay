@@ -3,7 +3,6 @@
 namespace yunwuxin\pay\request\alipay;
 
 use Carbon\Carbon;
-use function yunwuxin\pay\convert_key;
 
 abstract class Request extends \yunwuxin\pay\Request
 {

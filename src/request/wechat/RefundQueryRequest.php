@@ -9,7 +9,7 @@ class RefundQueryRequest extends Request
 {
     protected $uri = 'pay/refundquery';
 
-    public function __construct(Refundable $refund)
+    public function __invoke(Refundable $refund)
     {
         $this->params = [
             'appid'         => $this->channel->getOption('app_id'),

@@ -9,11 +9,9 @@ abstract class Request
 
     protected $params = [];
 
-    public function setChannel(Channel $channel)
+    public function __construct(Channel $channel)
     {
         $this->channel = $channel;
-
-        return $this;
     }
 
     abstract public function getMethod();

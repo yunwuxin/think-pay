@@ -8,7 +8,7 @@ class TradeRefundQueryRequest extends Request
 {
     protected $method = 'alipay.trade.fastpay.refund.query';
 
-    public function __construct(Refundable $refund)
+    public function __invoke(Refundable $refund)
     {
         $this->bizContent = [
             'out_trade_no'   => $refund->getCharge()->getTradeNo(),
