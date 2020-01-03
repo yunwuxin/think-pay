@@ -31,7 +31,7 @@ class Alipay extends Channel
     protected function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefault('sign_type', 'RSA2');
-        $resolver->setRequired(['app_id', 'alipay_public_key', 'app_public_key']);
+        $resolver->setRequired(['app_id', 'alipay_public_key', 'app_private_key']);
 
         $resolver->setNormalizer('alipay_public_key', function (Options $options, $value) {
             if (is_file($value)) {
@@ -41,7 +41,7 @@ class Alipay extends Channel
             return $value;
         });
 
-        $resolver->setNormalizer('app_public_key', function (Options $options, $value) {
+        $resolver->setNormalizer('app_private_key', function (Options $options, $value) {
             if (is_file($value)) {
                 $value = file_get_contents($value);
             }
@@ -122,7 +122,7 @@ class Alipay extends Channel
     public function generateSign(array $params): string
     {
         $data = $this->buildSignContent($params);
-        $key  = convert_key($this->getOption('app_public_key'), 'RSA PRIVATE key');
+        $key  = convert_key($this->getOption('app_private_key'), 'RSA PRIVATE key');
         if ("RSA2" == $params['sign_type']) {
             openssl_sign($data, $sign, $key, OPENSSL_ALGO_SHA256);
         } else {
