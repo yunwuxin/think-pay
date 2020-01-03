@@ -9,27 +9,27 @@
 // | Author: yunwuxin <448901948@qq.com>
 // +----------------------------------------------------------------------
 
-namespace yunwuxin\pay;
+namespace yunwuxin\pay\gateway\alipay;
 
 use yunwuxin\pay\entity\PurchaseResponse;
+use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
+use yunwuxin\pay\request\alipay\TradePreCreateRequest;
 
-abstract class Gateway
+class Native extends Gateway
 {
 
-    /** @var Channel */
-    protected $channel;
-
-    public function __construct(Channel $channel)
-    {
-        $this->channel = $channel;
-    }
-
     /**
-     * 付款
+     * 购买
      * @param Payable $charge
      * @return PurchaseResponse
      */
-    abstract public function purchase(Payable $charge);
+    public function purchase(Payable $charge)
+    {
+        $request = $this->channel->createRequest(TradePreCreateRequest::class, $charge);
 
+        $result = $this->channel->sendRequest($request);
+
+        return new PurchaseResponse($result['qr_code'], PurchaseResponse::TYPE_SCAN);
+    }
 }

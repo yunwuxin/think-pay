@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use DomainException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use think\Request;
@@ -61,7 +62,7 @@ class Alipay extends Channel
 
         $data = $this->sendRequest($request);
 
-        return new PurchaseResult('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], Carbon::now(), $data);
+        return new PurchaseResult($this->getName(), $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], Carbon::now(), $data);
     }
 
     /**
@@ -95,7 +96,7 @@ class Alipay extends Channel
 
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete(new PurchaseResult('alipay', $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], !empty($data['gmt_payment']) ? Carbon::parse($data['gmt_payment']) : null, $data));
+            $charge->onComplete(new PurchaseResult($this->getName(), $data['trade_no'], $data['total_amount'] * 100, 'TRADE_SUCCESS' == $data['trade_status'], !empty($data['gmt_payment']) ? Carbon::parse($data['gmt_payment']) : null, $data));
         }
         return response('success');
     }
@@ -145,12 +146,12 @@ class Alipay extends Channel
 
         if ($response === null) {
             echo json_last_error_msg();
-            throw new \RuntimeException(json_last_error_msg());
+            throw new RuntimeException(json_last_error_msg());
         }
 
         $key = str_replace('.', '_', $method) . '_response';
         if (!isset($response[$key])) {
-            throw new \RuntimeException('系统繁忙');
+            throw new RuntimeException('系统繁忙');
         }
 
         $result = $response[$key];

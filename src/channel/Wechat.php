@@ -36,6 +36,7 @@ class Wechat extends Channel
     const TYPE_NATIVE = 'NATIVE';
     const TYPE_JSAPI  = 'JSAPI';
     const TYPE_APP    = 'APP';
+    const TYPE_MWEB   = 'MWEB';
 
     protected $test = false;
 
@@ -121,9 +122,9 @@ class Wechat extends Channel
         $data = $this->sendRequest($request);
 
         if ($data['result_code'] == 'SUCCESS' && $data['trade_state'] == 'SUCCESS') {
-            $result = new PurchaseResult('wechat', $data['transaction_id'], $data['total_fee'], true, Carbon::parse($data['time_end']), $data);
+            $result = new PurchaseResult($this->getName(), $data['transaction_id'], $data['total_fee'], true, Carbon::parse($data['time_end']), $data);
         } else {
-            $result = new PurchaseResult('wechat', null, null, false, null, $data);
+            $result = new PurchaseResult($this->getName(), null, null, false, null, $data);
         }
 
         return $result;
@@ -155,7 +156,7 @@ class Wechat extends Channel
         $this->verifySign($this->generateSign($data), $data['sign']);
         $charge = $this->retrieveCharge($data['out_trade_no']);
         if (!$charge->isComplete()) {
-            $charge->onComplete(new PurchaseResult('wechat', $data['transaction_id'], $data['total_fee'], $data['result_code'] == 'SUCCESS', Carbon::parse($data['time_end']), $data));
+            $charge->onComplete(new PurchaseResult($this->getName(), $data['transaction_id'], $data['total_fee'], $data['result_code'] == 'SUCCESS', Carbon::parse($data['time_end']), $data));
         }
         $return = [
             'return_code' => 'SUCCESS',

@@ -10,7 +10,7 @@
 // +----------------------------------------------------------------------
 namespace yunwuxin\pay\entity;
 
-use Jenssegers\Date\Date;
+use Carbon\Carbon;
 
 class PurchaseResult
 {
@@ -53,7 +53,7 @@ class PurchaseResult
     }
 
     /**
-     * @return Date
+     * @return Carbon
      */
     public function getPayTime()
     {

@@ -14,6 +14,8 @@ use Carbon\Carbon;
 use Exception;
 use RuntimeException;
 use think\Model;
+use yunwuxin\pay\entity\PurchaseResponse;
+use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\Payment;
 
 /**
@@ -103,19 +105,24 @@ trait PayableModel
 
     /**
      * 订单查询
-     * @return mixed
+     * @param string $channel
+     * @return PurchaseResult
      */
-    public function query()
+    public function query($channel = null)
     {
-        return $this->invoke(function (Payment $payment) {
-            return $payment->channel($this->getChannel())->query($this);
+        if (is_null($channel)) {
+            $channel = $this->getChannel();
+        }
+
+        return $this->invoke(function (Payment $payment) use ($channel) {
+            return $payment->channel($channel)->query($this);
         });
     }
 
     /**
      * 支付
      * @param $gateway
-     * @return mixed
+     * @return PurchaseResponse
      */
     public function pay($gateway)
     {

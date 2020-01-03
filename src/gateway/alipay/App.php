@@ -11,7 +11,7 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
-use yunwuxin\pay\entity\ParamResult;
+use yunwuxin\pay\entity\PurchaseResponse;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\request\alipay\TradeAppPayRequest;
@@ -22,11 +22,11 @@ class App extends Gateway
     /**
      * 购买
      * @param Payable $charge
-     * @return mixed
+     * @return PurchaseResponse
      */
     public function purchase(Payable $charge)
     {
         $request = $this->channel->createRequest(TradeAppPayRequest::class, $charge);
-        return new ParamResult($request->getBody());
+        return new PurchaseResponse(parse_url($request->getUri(), PHP_URL_QUERY), PurchaseResponse::TYPE_PARAMS);
     }
 }

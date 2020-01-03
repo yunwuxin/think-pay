@@ -11,7 +11,7 @@
 
 namespace yunwuxin\pay\gateway\alipay;
 
-use yunwuxin\pay\entity\ResponseResult;
+use yunwuxin\pay\entity\PurchaseResponse;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\request\alipay\TradeWapPayRequest;
@@ -27,15 +27,12 @@ class Wap extends Gateway
     /**
      * 购买
      * @param Payable $charge
-     * @return mixed
+     * @return PurchaseResponse
      */
     public function purchase(Payable $charge)
     {
         $request = $this->channel->createRequest(TradeWapPayRequest::class, $charge);
 
-        $url = sprintf('%s?%s', $request->getUri(), http_build_query($request->getBody()));
-
-        $response = redirect($url);
-        return new ResponseResult($response);
+        return new PurchaseResponse($request->getUri(), PurchaseResponse::TYPE_REDIRECT);
     }
 }

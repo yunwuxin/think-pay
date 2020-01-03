@@ -13,7 +13,7 @@ namespace yunwuxin\pay\gateway\wechat;
 
 use think\helper\Str;
 use yunwuxin\pay\channel\Wechat;
-use yunwuxin\pay\entity\ParamResult;
+use yunwuxin\pay\entity\PurchaseResponse;
 use yunwuxin\pay\Gateway;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\request\wechat\UnifiedOrderRequest;
@@ -24,7 +24,7 @@ class App extends Gateway
     /**
      * 购买
      * @param Payable $charge
-     * @return mixed
+     * @return PurchaseResponse
      */
     public function purchase(Payable $charge)
     {
@@ -32,7 +32,7 @@ class App extends Gateway
 
         $result = $this->channel->sendRequest($request);
 
-        $data         = [
+        $data = [
             'appid'     => $this->channel->getOption('app_id'),
             'partnerid' => $this->channel->getOption('mch_id'),
             'prepayid'  => $result['prepay_id'],
@@ -40,7 +40,9 @@ class App extends Gateway
             'noncestr'  => Str::random(),
             'timestamp' => (string) time(),
         ];
+
         $data['sign'] = $this->channel->generateSign($data);
-        return new ParamResult($data);
+
+        return new PurchaseResponse($data, PurchaseResponse::TYPE_PARAMS);
     }
 }

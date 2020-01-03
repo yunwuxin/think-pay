@@ -21,6 +21,7 @@ use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use think\helper\Str;
 use think\Request;
+use yunwuxin\pay\entity\PurchaseResult;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\interfaces\Refundable;
 
@@ -41,6 +42,8 @@ abstract class Channel
     protected $options;
 
     protected $sandbox = false;
+
+    protected $name;
 
     public function __construct($options = [])
     {
@@ -112,6 +115,22 @@ abstract class Channel
         throw new InvalidArgumentException("Gateway [{$name}] not supported.");
     }
 
+    /**
+     * @param mixed $name
+     */
+    public function setName($name): void
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
     public function setNotifyUrl(string $notifyUrl)
     {
         $this->notifyUrl = $notifyUrl;
@@ -151,7 +170,7 @@ abstract class Channel
     /**
      * 查询
      * @param Payable $charge
-     * @return mixed
+     * @return PurchaseResult
      */
     abstract public function query(Payable $charge);
 
