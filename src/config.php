@@ -14,18 +14,18 @@ return [
     'charge'     => 'app\\model\\Charge',
     'channels'   => [
         'alipay' => [
-            'type'        => 'alipay',
-            'app_id'      => '',
-            'public_key'  => '', //支付宝公钥
-            'private_key' => '',//应用私钥
+            'type'              => 'alipay',
+            'app_id'            => '',
+            'alipay_public_key' => '', //支付宝公钥
+            'app_private_key'   => '',//应用私钥
         ],
         'wechat' => [
-            'type'        => 'wechat',
-            'key'         => '',
-            'app_id'      => '',
-            'mch_id'      => '',
-            'public_key'  => '',
-            'private_key' => '',
+            'type'    => 'wechat',
+            'key'     => '',
+            'app_id'  => '',
+            'mch_id'  => '',
+            'cert'    => '',//证书
+            'ssl_key' => '',//证书秘钥
         ],
     ],
     'notify_url' => '',//留空则设为PAY_NOTIFY对应的路由

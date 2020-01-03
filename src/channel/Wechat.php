@@ -52,11 +52,11 @@ class Wechat extends Channel
     {
         $resolver->setRequired(['app_id', 'mch_id', 'key']);
 
-        $resolver->setDefined(['public_key', 'private_key']);
+        $resolver->setDefined(['cert', 'ssl_key']);
 
-        $resolver->setNormalizer('public_key', function (Options $options, $value) {
+        $resolver->setNormalizer('cert', function (Options $options, $value) {
             if (!empty($value) && !is_file($value)) {
-                $fn = runtime_path() . 'think-pay-wechat-public-key-' . md5($value);
+                $fn = runtime_path() . 'think-pay-wechat-cert-' . md5($value);
                 if (!file_exists($fn)) {
                     file_put_contents($fn, convert_key($value, 'CERTIFICATE'));
                 }
@@ -66,9 +66,9 @@ class Wechat extends Channel
             return $value;
         });
 
-        $resolver->setNormalizer('private_key', function (Options $options, $value) {
+        $resolver->setNormalizer('ssl_key', function (Options $options, $value) {
             if (!empty($value) && !is_file($value)) {
-                $fn = runtime_path() . 'think-pay-wechat-private-key-' . md5($value);
+                $fn = runtime_path() . 'think-pay-wechat-ssl-key-' . md5($value);
                 if (!file_exists($fn)) {
                     file_put_contents($fn, convert_key($value, 'PRIVATE KEY'));
                 }
@@ -81,10 +81,10 @@ class Wechat extends Channel
 
     protected function getHttpClientConfig()
     {
-        if ($this->getOption('public_key') && $this->getOption('private_key')) {
+        if ($this->getOption('cert') && $this->getOption('ssl_key')) {
             return [
-                'cert'    => $this->getOption('public_key'),
-                'ssl_key' => $this->getOption('private_key'),
+                'cert'    => $this->getOption('cert'),
+                'ssl_key' => $this->getOption('ssl_key'),
             ];
         }
         return [];
