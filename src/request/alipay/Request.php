@@ -33,24 +33,27 @@ abstract class Request extends \yunwuxin\pay\Request
 
     public function getHeaders()
     {
-        return ['Content-Type' => 'application/x-www-form-urlencoded'];
+        return [];
     }
 
     public function getBody()
     {
-        $params = $this->getCommonParams() + $this->params;
-
-        $params['biz_content'] = json_encode(array_filter($this->bizContent), JSON_UNESCAPED_UNICODE);
-        $params['sign']        = $this->channel->generateSign($params);
-
-        return $params;
+        return null;
     }
 
     public function getUri(): string
     {
         if ($this->channel->isSandbox()) {
-            return $this->sandboxEndpoint;
+            $endpoint = $this->sandboxEndpoint;
+        } else {
+            $endpoint = $this->endpoint;
         }
-        return $this->endpoint;
+
+        $params = array_merge($this->getCommonParams(), $this->params);
+
+        $params['biz_content'] = json_encode(array_filter($this->bizContent), JSON_UNESCAPED_UNICODE);
+        $params['sign']        = $this->channel->generateSign($params);
+
+        return $endpoint . '?' . http_build_query($params);
     }
 }

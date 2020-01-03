@@ -133,9 +133,20 @@ class Alipay extends Channel
 
     protected function handleResponse(RequestInterface $request, ResponseInterface $response)
     {
-        $method = $request->getBody()['method'];
+        $uri   = $request->getUri();
+        $query = parse_url($uri, PHP_URL_QUERY);
+        parse_str($query, $body);
 
-        $response = json_decode($response->getBody()->getContents(), true);
+        $method = $body['method'];
+
+        $content = $response->getBody()->getContents();
+
+        $response = json_decode($content, true);
+
+        if ($response === null) {
+            echo json_last_error_msg();
+            throw new \RuntimeException(json_last_error_msg());
+        }
 
         $key    = str_replace('.', '_', $method) . '_response';
         $result = $response[$key];

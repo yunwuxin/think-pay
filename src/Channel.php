@@ -109,7 +109,7 @@ abstract class Channel
         throw new InvalidArgumentException("Gateway [{$name}] not supported.");
     }
 
-    public function setNotifyUrl($notifyUrl)
+    public function setNotifyUrl(string $notifyUrl)
     {
         $this->notifyUrl = $notifyUrl;
         return $this;

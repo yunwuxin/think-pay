@@ -69,7 +69,7 @@ class Payment extends Manager
 
         $notifyUrl = $this->getConfig('notify_url') ?: url('PAY_NOTIFY', ['channel' => $name])->domain(true);
 
-        $channel->setNotifyUrl($notifyUrl);
+        $channel->setNotifyUrl((string) $notifyUrl);
 
         if ($this->getConfig('sandbox')) {
             $channel->setSandbox();
