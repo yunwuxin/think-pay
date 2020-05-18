@@ -183,6 +183,11 @@ class Wechat extends Channel
         if (isset($result['sign'])) {
             $this->verifySign($this->generateSign($result), $result['sign']);
         }
+
+        if (isset($result['result_code']) && $result['result_code'] != 'SUCCESS') {
+            throw new DomainException($result['err_code_des']);
+        }
+
         return $result;
     }
 
