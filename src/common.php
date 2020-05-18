@@ -38,4 +38,9 @@ namespace yunwuxin\pay {
             wordwrap($key, 64, "\n", true) .
             "\n-----END {$type}-----";
     }
+
+    function generate_no()
+    {
+        return date('Ymd') . substr(implode(null, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
+    }
 }

@@ -13,7 +13,6 @@ namespace yunwuxin\pay\traits;
 
 use Exception;
 use think\Model;
-use yunwuxin\Pay;
 use yunwuxin\pay\interfaces\Payable;
 use yunwuxin\pay\Payment;
 
@@ -45,11 +44,7 @@ trait RefundableModel
 
     public function getRefundNo()
     {
-        $refundNo = $this->getAttrOrNull('id');
-
-        if ($refundNo) {
-            return 'RefundNo' . $refundNo;
-        }
+        return $this->getAttrOrNull('refund_no');
     }
 
     public function getExtra($name)

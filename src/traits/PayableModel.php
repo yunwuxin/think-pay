@@ -46,16 +46,12 @@ trait PayableModel
 
     public static function retrieveByTradeNo($tradeNo)
     {
-        return self::find(preg_replace('/^TradeNo/', '', $tradeNo));
+        return self::where('trade_no', $tradeNo)->find();
     }
 
     public function getTradeNo()
     {
-        $orderNo = $this->getAttrOrNull('id');
-
-        if ($orderNo) {
-            return 'TradeNo' . $orderNo;
-        }
+        return $this->getAttrOrNull('trade_no');
     }
 
     public function getAmount()
