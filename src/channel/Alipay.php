@@ -86,7 +86,7 @@ class Alipay extends Channel
 
     public function completePurchase(Request $request)
     {
-        $data = $request->post();
+        $data = $request->post('', null, null);
 
         $sign = $data['sign'];
 
