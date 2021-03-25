@@ -43,7 +43,7 @@ class Alipay extends Channel
     public function query(Payable $charge)
     {
         $bizContent = [
-            'out_trade_no' => $charge->getTradeNo()
+            'out_trade_no' => $charge->getTradeNo(),
         ];
 
         $method = 'alipay.trade.query';
@@ -65,7 +65,7 @@ class Alipay extends Channel
             'out_request_no' => $refund->getRefundNo(),
             'operator_id'    => $refund->getExtra('operator_id'),
             'store_id'       => $refund->getExtra('store_id'),
-            'terminal_id'    => $refund->getExtra('terminal_id')
+            'terminal_id'    => $refund->getExtra('terminal_id'),
         ]);
 
         $method = 'alipay.trade.refund';
@@ -77,7 +77,7 @@ class Alipay extends Channel
     {
         $bizContent = [
             'out_trade_no'   => $refund->getCharge()->getTradeNo(),
-            'out_request_no' => $refund->getRefundNo()
+            'out_request_no' => $refund->getRefundNo(),
         ];
         $method     = 'alipay.trade.fastpay.refund.query';
 
@@ -87,20 +87,24 @@ class Alipay extends Channel
     public function transfer(Transferable $transfer)
     {
         $bizContent = array_filter([
-            'out_biz_no'      => $transfer->getTransferNo(),
-            'payee_type'      => $transfer->getExtra('payee_type'),
-            'payee_account'   => $transfer->getAccount(),
-            'amount'          => $transfer->getAmount() / 100,
-            'payer_show_name' => $transfer->getExtra('payer_show_name'),
-            'payee_real_name' => $transfer->getRealName(),
-            'remark'          => $transfer->getRemark()
+            'out_biz_no'   => $transfer->getTransferNo(),
+            'trans_amount' => $transfer->getAmount() / 100,
+            'product_code' => 'TRANS_ACCOUNT_NO_PWD',
+            'biz_scene'    => 'DIRECT_TRANSFER',
+            'order_title'  => $transfer->getExtra('order_title'),
+            'payee_info'   => json_encode([
+                'identity'      => $transfer->getAccount(),
+                'identity_type' => $transfer->getExtra('identity_type'),
+                'name'          => $transfer->getRealName(),
+            ]),
+            'remark'       => $transfer->getRemark(),
         ]);
 
-        $method = 'alipay.fund.trans.toaccount.transfer';
+        $method = 'alipay.fund.trans.uni.transfer';
 
         $result = $this->client->execute($method, $bizContent);
 
-        return new TransferResult($result['order_id'], $result['pay_date']);
+        return new TransferResult($result['order_id'], $result['trans_date']);
     }
 
     public function completePurchase(Request $request)
@@ -138,7 +142,7 @@ class Alipay extends Channel
             'extend_params'        => $charge->getExtra('extend_params'),
             'enable_pay_channels'  => $charge->getExtra('enable_pay_channels'),
             'disable_pay_channels' => $charge->getExtra('disable_pay_channels'),
-            'store_id'             => $charge->getExtra('store_id')
+            'store_id'             => $charge->getExtra('store_id'),
         ]);
 
         return $this->client->buildParams('alipay.trade.app.pay', $bizContent, ['notify_url' => $this->notifyUrl]);
@@ -163,16 +167,15 @@ class Alipay extends Channel
             'extend_params'        => $charge->getExtra('extend_params'),
             'enable_pay_channels'  => $charge->getExtra('enable_pay_channels'),
             'disable_pay_channels' => $charge->getExtra('disable_pay_channels'),
-            'store_id'             => $charge->getExtra('store_id')
+            'store_id'             => $charge->getExtra('store_id'),
         ]);
 
         $params = $this->client->buildParams('alipay.trade.wap.pay', $bizContent, [
             'notify_url' => $this->notifyUrl,
-            'return_url' => $charge->getExtra('return_url')
+            'return_url' => $charge->getExtra('return_url'),
         ]);
 
         return sprintf('%s?%s', $this->client->endpoint(), http_build_query($params));
-
     }
 
     public function preCreate(Payable $charge)
@@ -196,7 +199,7 @@ class Alipay extends Channel
             }),
             'royalty_info'          => $charge->getExtra('royalty_info'),
             'sub_merchant'          => $charge->getExtra('sub_merchant'),
-            'alipay_store_id'       => $charge->getExtra('alipay_store_id')
+            'alipay_store_id'       => $charge->getExtra('alipay_store_id'),
         ]);
 
         $method = 'alipay.trade.precreate';
