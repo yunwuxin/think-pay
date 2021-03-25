@@ -87,20 +87,24 @@ class Alipay extends Channel
     public function transfer(Transferable $transfer)
     {
         $bizContent = array_filter([
-            'out_biz_no'      => $transfer->getTransferNo(),
-            'payee_type'      => $transfer->getExtra('payee_type'),
-            'payee_account'   => $transfer->getAccount(),
-            'amount'          => $transfer->getAmount() / 100,
-            'payer_show_name' => $transfer->getExtra('payer_show_name'),
-            'payee_real_name' => $transfer->getRealName(),
-            'remark'          => $transfer->getRemark()
+            'out_biz_no'   => $transfer->getTransferNo(),
+            'trans_amount' => $transfer->getAmount() / 100,
+            'product_code' => 'TRANS_ACCOUNT_NO_PWD',
+            'biz_scene'    => 'DIRECT_TRANSFER',
+            'order_title'  => $transfer->getExtra('order_title'),
+            'payee_info'   => json_encode([
+                'identity'      => $transfer->getAccount(),
+                'identity_type' => $transfer->getExtra('identity_type'),
+                'name'          => $transfer->getRealName()
+            ]),
+            'remark'       => $transfer->getRemark()
         ]);
 
-        $method = 'alipay.fund.trans.toaccount.transfer';
+        $method = 'alipay.fund.trans.uni.transfer';
 
         $result = $this->client->execute($method, $bizContent);
 
-        return new TransferResult($result['order_id'], $result['pay_date']);
+        return new TransferResult($result['order_id'], $result['trans_date']);
     }
 
     public function completePurchase(Request $request)
@@ -172,7 +176,6 @@ class Alipay extends Channel
         ]);
 
         return sprintf('%s?%s', $this->client->endpoint(), http_build_query($params));
-
     }
 
     public function preCreate(Payable $charge)
