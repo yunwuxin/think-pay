@@ -21,4 +21,14 @@ abstract class Request
     abstract public function getHeaders();
 
     abstract public function getBody();
+
+    public function toPsrRequest()
+    {
+        return new \GuzzleHttp\Psr7\Request(
+            $this->getMethod(),
+            $this->getUri(),
+            $this->getHeaders(),
+            $this->getBody()
+        );
+    }
 }

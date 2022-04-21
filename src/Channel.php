@@ -11,10 +11,7 @@
 namespace yunwuxin\pay;
 
 use Closure;
-use Http\Adapter\Guzzle6\Client;
-use Http\Client\HttpClient;
-use Http\Message\MessageFactory;
-use Http\Message\MessageFactory\GuzzleMessageFactory;
+use GuzzleHttp\Client;
 use InvalidArgumentException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -31,11 +28,8 @@ abstract class Channel
     /** @var Closure */
     protected $chargeResolver;
 
-    /** @var HttpClient */
+    /** @var Client */
     protected $httpClient;
-
-    /** @var MessageFactory */
-    protected $requestFactory;
 
     protected $notifyUrl;
 
@@ -53,9 +47,7 @@ abstract class Channel
 
         $this->options = $resolver->resolve($options);
 
-        $this->requestFactory = new GuzzleMessageFactory();
-
-        $this->httpClient = Client::createWithConfig($this->getHttpClientConfig());
+        $this->httpClient = new Client();
     }
 
     protected function getHttpClientConfig()
@@ -94,8 +86,7 @@ abstract class Channel
      */
     public function sendRequest(\yunwuxin\pay\Request $request)
     {
-        $request = $this->requestFactory
-            ->createRequest($request->getMethod(), $request->getUri(), $request->getHeaders(), $request->getBody());
+        $request = $request->toPsrRequest();
 
         $response = $this->httpClient->sendRequest($request);
 
