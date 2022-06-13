@@ -14,10 +14,15 @@ return [
     'charge'     => 'app\\model\\Charge',
     'channels'   => [
         'alipay' => [
-            'type'              => 'alipay',
-            'app_id'            => '',
-            'alipay_public_key' => '', //支付宝公钥
-            'app_private_key'   => '',//应用私钥
+            'type'                  => 'alipay',
+            'app_id'                => '',
+            'app_private_key'       => '',//应用私钥
+            //以下为公钥模式参数
+            'alipay_public_key'     => '', //支付宝公钥
+            //以下为公钥证书模式参数
+            'app_cert_path'         => '',//硬要公钥证书路径
+            'alipay_cert_path'      => '',//支付宝公钥证书路径
+            'alipay_root_cert_path' => '',//支付宝根证书路径
         ],
         'wechat' => [
             'type'    => 'wechat',

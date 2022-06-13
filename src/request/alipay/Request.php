@@ -3,7 +3,11 @@
 namespace yunwuxin\pay\request\alipay;
 
 use Carbon\Carbon;
+use yunwuxin\pay\channel\Alipay;
 
+/**
+ * @property Alipay $channel
+ */
 abstract class Request extends \yunwuxin\pay\Request
 {
     protected $endpoint        = 'https://openapi.alipay.com/gateway.do';
@@ -15,7 +19,7 @@ abstract class Request extends \yunwuxin\pay\Request
 
     protected function getCommonParams()
     {
-        return [
+        $params = [
             'app_id'    => $this->channel->getOption('app_id'),
             'method'    => $this->method,
             'format'    => 'JSON',
@@ -24,6 +28,12 @@ abstract class Request extends \yunwuxin\pay\Request
             'timestamp' => Carbon::now()->format('Y-m-d H:i:s'),
             'version'   => '1.0',
         ];
+
+        if ($this->channel->isCertMode()) {
+            $params['app_cert_sn']         = $this->channel->getAppCertSN();
+            $params['alipay_root_cert_sn'] = $this->channel->getAlipayRootCertSN();
+        }
+        return $params;
     }
 
     public function getMethod()
