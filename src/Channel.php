@@ -47,7 +47,7 @@ abstract class Channel
 
         $this->options = $resolver->resolve($options);
 
-        $this->httpClient = new Client();
+        $this->httpClient = new Client($this->getHttpClientConfig());
     }
 
     protected function getHttpClientConfig()
