@@ -151,7 +151,9 @@ class Wechat extends Channel
 
     public function completePurchase(Request $request)
     {
-        libxml_disable_entity_loader(true);
+        if (\PHP_VERSION_ID < 80000) {
+            libxml_disable_entity_loader(true);
+        }
         $data = xml2array($request->getContent());
         $this->verifySign($this->generateSign($data), $data['sign']);
         $charge = $this->retrieveCharge($data['out_trade_no']);
