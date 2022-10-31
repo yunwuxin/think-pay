@@ -179,7 +179,7 @@ class Wechat extends Channel
         $result = xml2array($response->getBody()->getContents());
 
         if ($result['return_code'] != 'SUCCESS') {
-            throw new DomainException($result['return_msg']);
+            throw new DomainException($result['return_msg']??($result['retmsg']??'支付出错'));
         }
 
         if (isset($result['sign'])) {
