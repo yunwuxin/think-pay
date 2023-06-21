@@ -21,7 +21,7 @@ class UnifiedOrderRequest extends Request
             'fee_type'         => $charge->getExtra('fee_type'),
             'time_start'       => $charge->getExtra('time_start'),
             'time_expire'      => $charge->getExpire(function (Carbon $date) {
-                return $date->format('yyyyMMddHHmmss');
+                return $date->format('YmdHis');
             }),
             'nonce_str'        => Str::random(),
             'body'             => $charge->getSubject(),
