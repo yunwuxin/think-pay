@@ -104,7 +104,7 @@ trait PayableModel
      * @param string $channel
      * @return PurchaseResult
      */
-    public function query($channel = null)
+    public function queryPayResult($channel = null)
     {
         if (is_null($channel)) {
             $channel = $this->getChannel();

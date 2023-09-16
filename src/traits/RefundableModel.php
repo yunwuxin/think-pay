@@ -81,7 +81,7 @@ trait RefundableModel
         });
     }
 
-    public function query()
+    public function queryRefundResult()
     {
         return $this->invoke(function (Payment $payment) {
             $payment->channel($this->getChannel())->refundQuery($this);
