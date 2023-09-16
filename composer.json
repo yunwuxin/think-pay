@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "topthink/framework": "^6.0",
-        "symfony/options-resolver": "^3.3",
+        "topthink/framework": "^6.0|^8.0",
+        "symfony/options-resolver": "^5.4|^6.3",
         "nesbot/carbon": "^2.28",
         "guzzlehttp/guzzle": "^7.0"
     },
