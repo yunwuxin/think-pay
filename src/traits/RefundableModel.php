@@ -25,6 +25,9 @@ trait RefundableModel
 {
     protected function getExtraAttr($extra)
     {
+        if (empty($extra)) {
+            return [];
+        }
         return json_decode($extra, true);
     }
 
