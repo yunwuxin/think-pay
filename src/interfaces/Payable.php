@@ -26,6 +26,8 @@ interface Payable
 
     public function getExpire(callable $format);
 
+    public function getReturnUrl();
+
     /**
      * @return bool
      */

@@ -89,6 +89,11 @@ trait PayableModel
         }
     }
 
+    public function getReturnUrl()
+    {
+        return null;
+    }
+
     /**
      * 获取渠道标识
      * @return string

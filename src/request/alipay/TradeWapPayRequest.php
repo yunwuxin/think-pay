@@ -28,7 +28,7 @@ class TradeWapPayRequest extends Request
         ];
 
         $this->params['notify_url'] = $this->channel->getNotifyUrl();
-        $this->params['return_url'] = $payable->getExtra('return_url');
+        $this->params['return_url'] = $payable->getReturnUrl();
     }
 
 }
