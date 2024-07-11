@@ -20,6 +20,13 @@ class Wap extends Gateway
 
         $result = $this->channel->sendRequest($request);
 
-        return new PurchaseResponse($result['mweb_url'], PurchaseResponse::TYPE_REDIRECT);
+        $returnUrl = $charge->getReturnUrl();
+        $url       = $result['mweb_url'];
+
+        if (!empty($returnUrl)) {
+            $url .= '&redirect_url=' . urlencode($returnUrl);
+        }
+
+        return new PurchaseResponse($url, PurchaseResponse::TYPE_REDIRECT);
     }
 }
