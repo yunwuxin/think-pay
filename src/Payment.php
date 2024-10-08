@@ -68,7 +68,7 @@ class Payment extends Manager
         $channel = parent::createDriver($name);
         $channel->setName($name);
 
-        $notifyUrl = $this->getConfig('notify_url') ?: url('PAY_NOTIFY', ['channel' => $name])->domain(true);
+        $notifyUrl = url($this->getConfig('notify_url', 'PAY_NOTIFY'), ['channel' => $name])->domain(true);
         $channel->setNotifyUrl((string) $notifyUrl);
 
         if ($this->getConfig('sandbox')) {

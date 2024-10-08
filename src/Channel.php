@@ -33,7 +33,7 @@ abstract class Channel
 
     protected $notifyUrl;
 
-    protected $options;
+    protected $options = [];
 
     protected $sandbox = false;
 
@@ -41,13 +41,19 @@ abstract class Channel
 
     public function __construct($options = [])
     {
+        $this->httpClient = new Client($this->getHttpClientConfig());
+        if (!empty($options)) {
+            $this->setOption($options);
+        }
+    }
+
+    public function setOption($options)
+    {
         $resolver = new OptionsResolver();
 
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);
-
-        $this->httpClient = new Client($this->getHttpClientConfig());
     }
 
     protected function getHttpClientConfig()
