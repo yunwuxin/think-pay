@@ -41,6 +41,9 @@ class Alipay extends Channel
         $resolver->setRequired(['app_id', 'app_private_key']);
         $resolver->setDefaults([
             'alipay_public_key'     => '',
+            'app_cert'              => '',
+            'alipay_cert'           => '',
+            'alipay_root_cert'      => '',
             'app_cert_path'         => '',
             'alipay_cert_path'      => '',
             'alipay_root_cert_path' => '',
@@ -57,19 +60,33 @@ class Alipay extends Channel
             return $value;
         });
 
+        $resolver->setNormalizer('app_cert', function (Options $options, $value) {
+            if ($value) {
+                $this->isCertMode = true;
+                $this->appCertSN  = $this->getCertSN($value);
+            }
+            return $value;
+        });
+
         $resolver->setNormalizer('app_cert_path', function (Options $options, $value) {
             if ($value) {
                 $this->isCertMode = true;
                 if (file_exists($value)) {
-                    $this->appCertSN = $this->getCertSN($value);
+                    $this->appCertSN = $this->getCertSN(file_get_contents($value));
                 }
             }
             return $value;
         });
 
+        $resolver->setNormalizer('alipay_root_cert', function (Options $options, $value) {
+            if ($value) {
+                $this->alipayRootCertSN = $this->getRootCertSN($value);
+            }
+        });
+
         $resolver->setNormalizer('alipay_root_cert_path', function (Options $options, $value) {
             if ($value && file_exists($value)) {
-                $this->alipayRootCertSN = $this->getRootCertSN($value);
+                $this->alipayRootCertSN = $this->getRootCertSN(file_get_contents($value));
             }
         });
     }
@@ -95,16 +112,14 @@ class Alipay extends Channel
         return $dec;
     }
 
-    protected function getCertSN($certPath)
+    protected function getCertSN($cert)
     {
-        $cert = file_get_contents($certPath);
-        $ssl  = openssl_x509_parse($cert);
+        $ssl = openssl_x509_parse($cert);
         return md5($this->array2string(array_reverse($ssl['issuer'])) . $ssl['serialNumber']);
     }
 
-    protected function getRootCertSN($certPath)
+    protected function getRootCertSN($cert)
     {
-        $cert  = file_get_contents($certPath);
         $array = explode("-----END CERTIFICATE-----", $cert);
         $SN    = null;
         for ($i = 0; $i < count($array) - 1; $i++) {
@@ -179,10 +194,20 @@ class Alipay extends Channel
         return urldecode(http_build_query($params));
     }
 
+    protected function getAlipayCert()
+    {
+        $path = $this->getOption('alipay_cert_path');
+        if ($path && file_exists($path)) {
+            return file_get_contents($path);
+        } else {
+            return $this->getOption('alipay_cert');
+        }
+    }
+
     public function verifySign($data, $sign)
     {
         if ($this->isCertMode) {
-            $key = openssl_get_publickey(file_get_contents($this->getOption('alipay_cert_path')));
+            $key = openssl_get_publickey($this->getAlipayCert());
         } else {
             $key = $this->getOption('alipay_public_key');
         }

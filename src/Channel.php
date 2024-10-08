@@ -43,14 +43,14 @@ abstract class Channel
     {
         $this->httpClient = new Client($this->getHttpClientConfig());
         if (!empty($options)) {
-            $this->setOption($options);
+            $this->setOptions($options);
         }
     }
 
-    public function setOption($options)
+    public function setOptions($options)
     {
         $resolver = new OptionsResolver();
-
+        $resolver->setIgnoreUndefined();
         $this->configureOptions($resolver);
 
         $this->options = $resolver->resolve($options);
